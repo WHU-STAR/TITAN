@@ -6,40 +6,41 @@ import (
 )
 
 type ClusterConfig struct {
-	ConfigName     string
-	SchedulerIP    string
-	SchedulerPort  string
-	ClientIP       string
-	ClientPort     string
-	LogLevel       string
-	MetaIndexType  string
-	NodeIndexType  string
+	ConfigName      string
+	SchedulerIP     string
+	SchedulerPort   string
+	ClientIP        string
+	ClientPort      string
+	LogLevel        string
+	MetaIndexType   string
+	NodeIndexType   string
 	SearchMethod    string
 	PruningStrategy string
-	TopK           map[int][]int
-	MetaK          []int
-	// MetaKAndEfSearch 允许显式指定 MetaK 与 EfSearch 的组合对：
-	// 形如 [[metaK, efSearch], ...]。如果该字段非空，则在实验参数生成时
-	// 优先使用该字段，而忽略独立的 MetaK 与 EfSearch 列表。
+	TopK            map[int][]int
+	MetaK           []int
+	// MetaKAndEfSearch lists explicit [metaK, efSearch] pairs.
+	// When non-empty, experiment generation uses these pairs
+	// and ignores the separate MetaK and EfSearch lists.
 	MetaKAndEfSearch [][]int
-	Thresh         []int
-	PruningLambdas []float64
-	EfSearch       []int
-	NProbe         []int
-	QueryCount     int
-	Epochs         int
-	RecallGoal     float64
-	RecallMinimum  float64
+	Thresh           []int
+	PruningLambdas   []float64
+	EfSearch         []int
+	NProbe           []int
+	QueryCount       int
+	Epochs           int
+	RecallGoal       float64
+	RecallMinimum    float64
 }
 
 var Config *ClusterConfig
 var builder Builder
 
 func init() {
-	// 如果没有指定builder，使用默认builder，目前只测试，默认builder
-	env := os.Getenv("VCLUSTER_CONFIG_BUILDER")
+	// Fall back to the default builder when the env var is unset.
+	env := os.Getenv("TITAN_CONFIG_BUILDER")
 	if env == "" {
-		fmt.Print("VCLUSTER_CONFIG_BUILDER environment variable is not set, setting it to 'default'\n")
+		env = "default"
+		fmt.Print("TITAN_CONFIG_BUILDER is not set, using 'default'\n")
 	}
 	builder = &ConfigBuilder{
 		Env: env,

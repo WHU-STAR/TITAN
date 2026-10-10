@@ -191,12 +191,10 @@ func (v *VamanaIndex) GetDataSize() uint32 {
 }
 
 func (v *VamanaIndex) GetAvgHops() float32 {
-	// TODO: implement
 	return 0.0
 }
 
 func (v *VamanaIndex) GetAvgDistComputations() float32 {
-	// TODO: implement
 	return 0.0
 }
 

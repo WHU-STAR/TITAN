@@ -42,7 +42,7 @@ func GetLogger() *zap.Logger {
 	return logger
 }
 
-// 提供便捷的日志方法，直接使用包级别的函数
+// Package-level logging helpers.
 func Debug(msg string, fields ...zap.Field) {
 	GetLogger().Debug(msg, fields...)
 }
@@ -74,7 +74,7 @@ func GetLogLevel(level string) zapcore.Level {
 	case "ERROR":
 		return zapcore.ErrorLevel
 	default:
-		return zapcore.InfoLevel // 默认级别
+		return zapcore.InfoLevel // default level
 	}
 
 }

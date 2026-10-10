@@ -56,7 +56,7 @@ func (idx *BruteForceIndex) AddItems(points [][]float32, ids []uint32, numGorout
 		numGoroutines = len(points)
 	}
 	// If the number of points is less than 10000, use single goroutine
-	// TODO: 需要确定合适的参数
+	// Single-threaded below this size; larger inputs are sharded.
 	if len(points) <= 10000 || numGoroutines == 1 {
 		for i := 0; i < len(points); i++ {
 			err := idx.AddPoint(points[i], ids[i])
@@ -137,7 +137,7 @@ func (idx *BruteForceIndex) BatchSearchKnn(queries [][]float32, k int, numGorout
 	distList := make([][]float32, len(queries))
 
 	// If the number of queries is less than 10000, use single goroutine
-	// TODO: 需要确定合适的参数
+	// Single-threaded below this size; larger inputs are sharded.
 	if len(queries) <= 10000 || numGoroutines == 1 {
 		for i := 0; i < len(queries); i++ {
 			labels, distances, err := idx.SearchKNN(queries[i], k)

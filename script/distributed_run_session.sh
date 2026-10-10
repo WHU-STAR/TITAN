@@ -1,5 +1,5 @@
 #!/bin/bash
-VCLUSTER_CONFIG_BUILDER=default_distributed
+TITAN_CONFIG_BUILDER=default_distributed
 runName="default_run"
 
 session_id=0
@@ -18,7 +18,7 @@ do_wait=1 # 0表示等待窗口关闭，1表示不等待
 while getopts "r:n:u:c:w:p:s" opt; do
   case $opt in
   r)
-    VCLUSTER_CONFIG_BUILDER="$OPTARG"
+    TITAN_CONFIG_BUILDER="$OPTARG"
     ;;
   n)
     runName="$OPTARG"
@@ -58,7 +58,7 @@ num_workers=$num_workers \
   session_id=$session_id \
   runName=$runName \
   BASE_PORT=$BASE_PORT \
-  VCLUSTER_CONFIG_BUILDER=$VCLUSTER_CONFIG_BUILDER \
+  TITAN_CONFIG_BUILDER=$TITAN_CONFIG_BUILDER \
   TMUXIFIER_LAYOUT_PATH=$(pwd)/../.tmuxifier \
   tmuxifier load-window tmux_distributed_runner_window_layout
 

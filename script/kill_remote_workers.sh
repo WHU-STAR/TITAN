@@ -2,7 +2,7 @@
 
 NUM_WORKERS=16
 target_user=$USER
-REMOTE_DIR="/data/vcluster-system"
+REMOTE_DIR="/data/titan"
 while getopts ":s:w:u:" opt; do
   case $opt in
   s)
@@ -46,7 +46,6 @@ for ((i = 0; i < NUM_WORKERS; i++)); do
         # echo $kill_command
         # ssh -n "${target_user}@${HOSTNAME}" $kill_command
         ssh -n "${target_user}@${HOSTNAME}" "killall worker"
-        # TODO: may need to wait for the process to be really killed
         if [ $? -eq 0 ]; then
             echo "$WORKER_ID on $HOSTNAME killed successfully"
         else

@@ -12,7 +12,7 @@ if [[ -z "${dataTarget:-}" ]]; then
 fi
 
 # 默认变量（可被环境覆盖）
-export VCLUSTER_CONFIG_BUILDER=${VCLUSTER_CONFIG_BUILDER:-default_distributed}
+export TITAN_CONFIG_BUILDER=${TITAN_CONFIG_BUILDER:-default_distributed}
 export BASE_PORT=${BASE_PORT:-50050}
 
 # 使用 Ansible 停止旧实例（幂等）
@@ -26,7 +26,7 @@ fi
 
 # 使用 Ansible 启动分布式 workers（systemd --user）
 ansible-playbook -i "$ANSIBLE_INVENTORY" "$ANSIBLE_PLAY_START" --forks 50 \
-  -e vcluster_config_builder="$VCLUSTER_CONFIG_BUILDER" \
+  -e titan_config_builder="$TITAN_CONFIG_BUILDER" \
   -e base_port="$BASE_PORT"
 
 echo "Started distributed workers via Ansible."

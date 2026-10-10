@@ -2,7 +2,7 @@ package worker
 
 import "os"
 
-// 判断文件是否存在
+// PathExists reports whether path is an existing file.
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -14,7 +14,7 @@ func PathExists(path string) (bool, error) {
 	return false, err
 }
 
-// 对数组去重
+// unique returns the first occurrence of each id.
 func unique(labels []uint32) []uint32 {
 	uniqueLabels := make([]uint32, 0)
 	temp := make(map[uint32]struct{})

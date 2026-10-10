@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory={{ remote_dir }}
-Environment="VCLUSTER_CONFIG_BUILDER={{ vcluster_config_builder }}"
+Environment="TITAN_CONFIG_BUILDER={{ titan_config_builder }}"
 ExecStart={{ remote_dir }}/{{ worker_bin }} \
   --id={{ worker_id }} \
   --address={{ worker_ip }}:{{ worker_port }} \
@@ -12,7 +12,7 @@ ExecStart={{ remote_dir }}/{{ worker_bin }} \
 StandardOutput=append:{{ log_dir }}/{{ worker_id }}.log
 StandardError=inherit
 Restart=always
-RuntimeDirectory=vcluster-system
+RuntimeDirectory=titan
 RuntimeDirectoryMode=0755
 
 [Install]

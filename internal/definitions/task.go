@@ -2,7 +2,7 @@ package definitions
 
 import "time"
 
-// Task 表示一个向量检索任务
+// Task is one vector-search request.
 type Task struct {
 	ID         string    `json:"id"`
 	QueryID    uint32    `json:"query_id"`
@@ -14,11 +14,11 @@ type Task struct {
 	Status     string    `json:"status"`
 	CreatedAt  time.Time `json:"created_at"`
 	NodeID     string    `json:"node_id,omitempty"`
-	Result     []int64   `json:"result,omitempty"`    // ID表示的检索结果
-	Distances  []float32 `json:"distances,omitempty"` // 检索结果的距离
+	Result     []int64   `json:"result,omitempty"`    // neighbor ids
+	Distances  []float32 `json:"distances,omitempty"` // distances of the neighbors
 }
 
-// TaskStatus 定义任务状态
+// TaskStatus is the lifecycle of a task.
 const (
 	TaskStatusPending  = "pending"
 	TaskStatusAssigned = "assigned"
@@ -26,7 +26,7 @@ const (
 	TaskStatusFailed   = "failed"
 )
 
-// TaskType 定义任务类型
+// TaskType selects meta-index routing or a broadcast node query.
 const (
 	TaskMetaQuery = "meta-query"
 	TaskNodeQuery = "node-query"

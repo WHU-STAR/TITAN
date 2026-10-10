@@ -56,7 +56,7 @@ func (idx *Index) AddItems(points [][]float32, ids []uint32, numGoroutines int) 
 		numGoroutines = len(points)
 	}
 	// If the number of points is less than 10000, use single goroutine
-	// TODO: 需要确定合适的参数
+	// Single-threaded below this size; larger inputs are sharded.
 	if len(points) <= 10000 || numGoroutines == 1 {
 		for i := range points {
 			err := idx.AddPoint(points[i], ids[i])
@@ -169,7 +169,7 @@ func (idx *Index) BatchSearchKnn(queries [][]float32, k int, numGoroutines int) 
 	distList := make([][]float32, len(queries))
 
 	// If the number of queries is less than 10000, use single goroutine
-	// TODO: 需要确定合适的参数
+	// Single-threaded below this size; larger inputs are sharded.
 	if len(queries) <= 10000 || numGoroutines == 1 {
 		for i, query := range queries {
 			labels, distances, err := idx.SearchKNN(query, k)

@@ -1,44 +1,29 @@
-# Docker容器化部署
+# Docker 部署
 
-## 快速开始
-
-1. 构建镜像
+## 构建镜像
 
 ```sh
 make image
 ```
 
-2. 运行容器
+镜像名是 `titan`。构建前会创建空的 `data`、`log`、`pids` 目录，避免镜像里缺少这些路径。
+
+## 运行
+
+端口参数要写在镜像名前面：
 
 ```sh
-# 运行调度器
-docker run -d --name scheduler vcluster-system scheduler -p 50050:50050
-
-# 运行工作节点
-docker run -d --name worker vcluster-system worker -p 50051:50051
-
-# 运行客户端
-docker run -d --name client vcluster-system client -p 50070:50070
+docker run -d --name scheduler -p 50050:50050 titan scheduler
+docker run -d --name worker -p 50051:50051 titan worker
+docker run -d --name client -p 50070:50070 titan client
 ```
 
-3. 停止容器
+配置通过环境变量 `TITAN_CONFIG_BUILDER` 选择 `runconfig.yaml` 里的条目。
+
+## 停止和删除
 
 ```sh
-docker stop <component_name>
+docker stop scheduler worker client
+docker rm scheduler worker client
+docker rmi titan
 ```
-
-4. 删除容器
-
-```sh
-docker rm <component_name>
-```
-
-5. 删除镜像
-
-```sh
-docker rmi vcluster-system
-```
-
-## TODO
-
-1. 集群配置读取，需要完善config中的builder模块

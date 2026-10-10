@@ -11,7 +11,7 @@ memory at a time, so it runs comfortably on a low-RAM box (e.g. 14 GB) even for
 
 Usage:
     python convert_u8bin_to_fbin.py [SRC] [DST] [CHUNK_ROWS]
-Defaults: SRC=/data/vdb/data/sift1b/base.1B.u8bin
+Defaults: SRC=<repo>/data/sift1b/base.1B.u8bin
           DST=<SRC with .u8bin -> .fbin>
 """
 import os
@@ -21,7 +21,12 @@ import time
 
 import numpy as np
 
-DEFAULT_SRC = "/data/vdb/data/sift1b/base.1B.u8bin"
+DEFAULT_SRC = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data",
+    "sift1b",
+    "base.1B.u8bin",
+)
 
 
 def convert(src: str, dst: str, chunk_rows: int) -> None:

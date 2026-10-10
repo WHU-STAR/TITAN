@@ -3,35 +3,35 @@ import "google/protobuf/empty.proto";
 import "worker.ext.proto";
 package pb;
 
-option go_package = "vcluster-system/protocol/pb";
+option go_package = "github.com/WHU-STAR/TITAN/protocol/pb";
 
 service SchedulerService {
-  // 注册工作节点
+  // Register a worker.
   rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
 
-  // 任务完成通知
+  // Mark a task complete.
   rpc CompleteTask(TaskCompleteRequest) returns (TaskCompleteResponse);
 
-  // 心跳检测
+  // Worker heartbeat.
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 
-  // 发送查询任务
+  // Submit a query task.
   rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
 
-  // 获取worker的元索引查询次数
+  // Meta-index query count across workers.
   rpc GetWorkerTotalMetaCount(google.protobuf.Empty)
       returns (GetWorkerTotalQueryCountResponse);
-  // 获取worker的内部索引查询次数
+  // Local-index query count across workers.
   rpc GetWorkerTotalInternalCount(google.protobuf.Empty)
       returns (GetWorkerTotalQueryCountResponse);
 
-  // 获取worker的平均查询时间
+  // Average query time across workers.
   rpc GetWorkerTotalTimeAvg(GetWorkerQueryTimeRequest) returns (GetWorkerQueryTimeResponse);
 
-  // 获取worker的平均查询跳数
+  // Average query hops across workers.
   rpc GetWorkerTotalQueryHops(GetWorkerQueryHopsRequest) returns (GetWorkerQueryHopsResponse);
 
-  // 获取worker的平均距离计算次数
+  // Average distance computations across workers.
   rpc GetWorkerTotalQueryDistAvg(GetWorkerQueryDistAvgRequest) returns (GetWorkerQueryDistAvgResponse);
 
   rpc SetNProbe(SetNProbeRequest) returns (SetterResponse);

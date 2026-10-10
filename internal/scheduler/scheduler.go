@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"net"
 	"sync"
@@ -16,13 +17,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-/*
-TODO:
-1. current available node
-2. send index data query
-3. worker: send task to other workers after meta data query
-*/
-
 var ErrNoAvailableNode = errors.New("no available node")
 
 const HEARTBEAT_TIMEOUT = time.Second * 24
@@ -35,12 +29,12 @@ type Scheduler struct {
 	nodeskey    []string
 	nodesLock   sync.RWMutex
 
-	tasks    chan *definitions.Task       // 任务队列
-	taskMap  map[string]*definitions.Task // 任务状态映射
+	tasks    chan *definitions.Task       // task queue
+	taskMap  map[string]*definitions.Task // task status by id
 	taskLock sync.RWMutex
 
-	ctx        context.Context    // 用于控制goroutine的生命周期
-	cancelFunc context.CancelFunc // 用于取消所有goroutine
+	ctx        context.Context    // cancels scheduler goroutines
+	cancelFunc context.CancelFunc // cancels scheduler goroutines
 	nodeOffset int32
 }
 
@@ -51,16 +45,16 @@ func NewScheduler(address string, strategy string, num_workers int) *Scheduler {
 		strategy:    strategy,
 		num_workers: num_workers,
 		nodes:       make(map[string]*definitions.Node),
-		tasks:       make(chan *definitions.Task, 100000), // 缓冲区大小可配置
+		tasks:       make(chan *definitions.Task, 100000), // buffered task queue
 		taskMap:     make(map[string]*definitions.Task),
 		ctx:         ctx,
 		cancelFunc:  cancel,
 		nodeOffset:  0,
 	}
-	// 启动心跳监控
+	// Watch worker heartbeats.
 	go s.StartHealthCheck(ctx)
 
-	// 启动任务处理
+	// Assign queued tasks.
 	go s.AssignTasks(ctx)
 	return s
 }
@@ -133,7 +127,7 @@ func (s *Scheduler) RegisterNode(nodeID string, address string) error {
 	}
 	rpcNewNodesMap := make(map[string]string)
 
-	// 向节点更新节点表
+	// Push the worker table to every registered node.
 	nodes_table := make(map[string]string)
 	s.nodeskey = make([]string, 0)
 	for k, v := range s.nodes {
@@ -172,7 +166,7 @@ func (s *Scheduler) GetNodeTable() map[string]string {
 	return nodes_table
 }
 
-// AssignTasks 持续运行，将任务分配给可用节点
+// AssignTasks dispatches queued tasks to workers.
 func (s *Scheduler) AssignTasks(ctx context.Context) {
 	for {
 		select {
@@ -183,7 +177,7 @@ func (s *Scheduler) AssignTasks(ctx context.Context) {
 				return
 			}
 			if err := s.assignTask(ctx, task); err != nil {
-				// 分配失败，重新入队
+				// Requeue when assignment fails.
 				select {
 				case s.tasks <- task:
 				case <-ctx.Done():
@@ -194,7 +188,7 @@ func (s *Scheduler) AssignTasks(ctx context.Context) {
 	}
 }
 
-// assignTask 将任务分配给可用节点
+// assignTask picks a worker and marks the task assigned.
 func (s *Scheduler) assignTask(ctx context.Context, task *definitions.Task) error {
 	// s.QueryNodeStatus(ctx)
 	// node := s.GetAvailableNode()
@@ -214,12 +208,12 @@ func (s *Scheduler) assignTask(ctx context.Context, task *definitions.Task) erro
 		return ErrNoAvailableNode
 	}
 
-	// 更新任务状态
+	// Mark the task assigned.
 	s.taskLock.Lock()
 	task.Status = definitions.TaskStatusAssigned
 	task.NodeID = node.ID
 
-	// 根据策略确定任务类型
+	// Similarity routing starts with a meta-index query.
 	if s.strategy == "similarity" {
 		task.Type = definitions.TaskMetaQuery
 	} else {
@@ -227,22 +221,22 @@ func (s *Scheduler) assignTask(ctx context.Context, task *definitions.Task) erro
 	}
 	s.taskLock.Unlock()
 
-	// 异步发送任务到工作节点
+	// Send the task without blocking the assigner.
 	go s.sendTaskToNode(ctx, task, node)
 
 	return nil
 }
 
-// sendTaskToNode 通过gRPC发送任务到工作节点
+// sendTaskToNode delivers a task over gRPC.
 func (s *Scheduler) sendTaskToNode(ctx context.Context, task *definitions.Task, node *definitions.Node) {
-	//创建 WorkerService 客户端
+	// Connect to the worker.
 	client, err := rpc.GetWorkerExtClient(node.Address)
 	if err != nil {
 		logger.Error("Failed to connect to node", zap.String("nodeID", node.ID), zap.Error(err))
 		return
 	}
 
-	// 准备将任务传送给工作节点
+	// Build the task request.
 	taskRequest := &pb.TaskProcessRequest{
 		TaskId:     task.ID,
 		TaskType:   task.Type,
@@ -252,7 +246,7 @@ func (s *Scheduler) sendTaskToNode(ctx context.Context, task *definitions.Task, 
 		WorkerTopK: task.WorkerTopK,
 	}
 
-	//向工作节点发送任务
+	// Deliver the task.
 	_, err = client.ProcessTask(ctx, taskRequest)
 	if err != nil {
 		logger.Error("Failed to send task to node", zap.String("nodeID", node.ID), zap.Error(err))
@@ -260,7 +254,7 @@ func (s *Scheduler) sendTaskToNode(ctx context.Context, task *definitions.Task, 
 	}
 }
 
-// GetAvailableNode 获取可用节点
+// GetAvailableNode returns the worker with the lowest load score.
 func (s *Scheduler) GetAvailableNode() *definitions.Node {
 	s.nodesLock.RLock()
 	defer s.nodesLock.RUnlock()
@@ -284,6 +278,7 @@ func (s *Scheduler) QueryNodeStatus(ctx context.Context) {
 	for _, node := range s.nodes {
 		wg.Add(1)
 		go func(node *definitions.Node) {
+			defer wg.Done()
 			client, err := rpc.GetWorkerExtClient(node.Address)
 			if err != nil {
 				logger.Error("Failed to connect to node", zap.String("nodeID", node.ID), zap.Error(err))
@@ -296,13 +291,12 @@ func (s *Scheduler) QueryNodeStatus(ctx context.Context) {
 			}
 			logger.Info("Node status", zap.String("nodeID", node.ID), zap.Int64("score", result.Score))
 			s.UpdateNodeStatus(node.ID, result.Score)
-			wg.Done()
 		}(node)
 	}
 	wg.Wait()
 }
 
-// UpdateNodeStatus 更新节点状态
+// UpdateNodeStatus records a worker's load score.
 func (s *Scheduler) UpdateNodeStatus(nodeID string, score int64) {
 	s.nodesLock.Lock()
 	defer s.nodesLock.Unlock()
@@ -313,15 +307,14 @@ func (s *Scheduler) UpdateNodeStatus(nodeID string, score int64) {
 	}
 }
 
-// Heartbeat 处理节点心跳
+// Heartbeat records a worker heartbeat.
 func (s *Scheduler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) {
 	logger.Info("Heartbeat from", zap.String("nodeID", req.NodeId), zap.Int64("score", req.Score))
 	s.UpdateNodeStatus(req.NodeId, req.Score)
 }
 
-// ExecuteTask 处理查询任务
+// ExecuteTask enqueues one query.
 func (s *Scheduler) ExecuteTask(ctx context.Context, query []float32, topK int64, workerTopK int64, queryID uint32) (taskID string, err error) {
-	// TODO: 目前假设一个请求里只有一个query
 	task := &definitions.Task{
 		ID:         generateTaskID(),
 		Query:      query,
@@ -333,12 +326,10 @@ func (s *Scheduler) ExecuteTask(ctx context.Context, query []float32, topK int64
 	}
 
 	logger.Debug("Received Task", zap.String("taskID", task.ID))
-	// 保存任务状态
 	s.taskLock.Lock()
 	s.taskMap[task.ID] = task
 	s.taskLock.Unlock()
 
-	// 将任务加入队列
 	select {
 	case s.tasks <- task:
 		return task.ID, nil
@@ -362,11 +353,14 @@ func generateTaskID() string {
 
 func randomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[time.Now().UnixNano()%int64(len(letters))]
+	raw := make([]byte, n)
+	if _, err := rand.Read(raw); err != nil {
+		return time.Now().Format("150405.000000")
 	}
-	return string(b)
+	for i := range raw {
+		raw[i] = letters[int(raw[i])%len(letters)]
+	}
+	return string(raw)
 }
 
 func (s *Scheduler) SetWorkersFloatVal(ctx context.Context, valType int32, val float32) error {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(c_api_example)
+project(titan_engine)
 
 # Add o3 flag
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
@@ -48,12 +48,12 @@ endif()
 
 find_package(OpenMP)
 
-# 设置 C++ 标准
+# C++ standard.
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# 设置生成动态库
+# Shared libraries.
 add_library(hnsw_c_api SHARED
     c_api/hnsw/hnsw_c_api.cpp
 )
@@ -66,16 +66,11 @@ add_library(vamana_c_api SHARED
     c_api/vamana/vamana_c_api.cpp
 )
 
-add_library(example_api SHARED
-    c_api/example/example_api.cpp
-)
-
-# 添加IVF SIMD基准测试可执行文件
 add_executable(ivf_simd_benchmark
     c_api/ivf/simd_benchmark.cpp
 )
 
-# 设置头文件包含目录
+# Header search paths.
 target_include_directories(hnsw_c_api PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/c_api/hnsw
 )
@@ -88,11 +83,7 @@ target_include_directories(vamana_c_api PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/c_api/vamana
 )
 
-target_include_directories(example_api PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/c_api/example
-)
-
-# 设置库的输出名称
+# Library output names.
 set_target_properties(hnsw_c_api PROPERTIES
     PREFIX "lib"
     OUTPUT_NAME "hnsw"
@@ -108,26 +99,20 @@ set_target_properties(vamana_c_api PROPERTIES
     OUTPUT_NAME "vamana"
 )
 
-set_target_properties(example_api PROPERTIES
-    PREFIX "lib"
-    OUTPUT_NAME "example"
-)
-
-# 如果是 MacOS，设置 .dylib 后缀
+# Use the .dylib suffix on macOS.
 if(APPLE)
     set_target_properties(hnsw_c_api PROPERTIES SUFFIX ".dylib")
     set_target_properties(vamana_c_api PROPERTIES SUFFIX ".dylib")
     set_target_properties(ivf_c_api PROPERTIES SUFFIX ".dylib")
-    set_target_properties(example_api PROPERTIES SUFFIX ".dylib")
 endif()
 
-# 设置基准测试的头文件包含目录和链接
+# SIMD benchmark includes and link.
 target_include_directories(ivf_simd_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/c_api/ivf
 )
 target_link_libraries(ivf_simd_benchmark ivf_c_api)
 
-# 链接 OpenMP
+# Link OpenMP.
 if(OpenMP_CXX_FOUND)
     message("OPENMP FOUND")
     target_link_libraries(vamana_c_api PUBLIC OpenMP::OpenMP_CXX)

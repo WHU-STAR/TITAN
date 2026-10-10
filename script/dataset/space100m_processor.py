@@ -16,13 +16,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data_writer import write_fvecs, write_ivecs
 
 
-base_path = "/home/adrian/code/vcluster-system/data/ann-spacev-100m/base.100M.i8bin"
-query_path = "/home/adrian/code/vcluster-system/data/ann-spacev-100m/query.30K.i8bin"
-groundtruth_path = "/home/adrian/code/vcluster-system/data/ann-spacev-100m/groundtruth.30K.i32bin"
-ids_path = "/home/adrian/code/vcluster-system/data/ann-spacev-100m/ids.100M.i32bin"
-distances_path = "/home/adrian/code/vcluster-system/data/ann-spacev-100m/groundtruth.30K.f32bin"
+_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "ann-spacev-100m"
+base_path = str(_DATA_DIR / "base.100M.i8bin")
+query_path = str(_DATA_DIR / "query.30K.i8bin")
+groundtruth_path = str(_DATA_DIR / "groundtruth.30K.i32bin")
+ids_path = str(_DATA_DIR / "ids.100M.i32bin")
+distances_path = str(_DATA_DIR / "groundtruth.30K.f32bin")
 
-def recaclulate_groundtruth(ids: np.ndarray, groundtruth: np.ndarray):
+def recalculate_groundtruth(ids: np.ndarray, groundtruth: np.ndarray):
     """
     使用GPU加速重新计算groundtruth，将原来的ID值替换为对应的下标索引
     
@@ -31,7 +32,7 @@ def recaclulate_groundtruth(ids: np.ndarray, groundtruth: np.ndarray):
         groundtruth: 原始groundtruth，包含查询结果对应的ID值
     
     Returns:
-        recaclulated_groundtruth: 更新后的groundtruth，ID值被替换为对应的下标索引
+        recalculated_groundtruth: 更新后的groundtruth，ID值被替换为对应的下标索引
     """
     
     # 检查GPU是否可用
@@ -67,15 +68,15 @@ def recaclulate_groundtruth(ids: np.ndarray, groundtruth: np.ndarray):
     result_tensor = result_flat.reshape(groundtruth.shape)
     
     # 将结果转回numpy数组
-    recaclulated_groundtruth = result_tensor.cpu().numpy()
+    recalculated_groundtruth = result_tensor.cpu().numpy()
     
     # 显示前几个结果作为验证
     print("前几个重新计算的结果:")
     for i in range(min(3, len(groundtruth))):
         for j in range(min(5, len(groundtruth[i]))):
-            print(f"  查询{i}, 邻居{j}: {groundtruth[i][j]} -> {recaclulated_groundtruth[i][j]}")
+            print(f"  查询{i}, 邻居{j}: {groundtruth[i][j]} -> {recalculated_groundtruth[i][j]}")
     
-    return recaclulated_groundtruth
+    return recalculated_groundtruth
 
 def process_space100m_dataset(output_dir: str):
     """
@@ -112,7 +113,7 @@ def process_space100m_dataset(output_dir: str):
     
     # 重新计算groundtruth
     print(f"\n重新计算groundtruth...")
-    recaclulated_groundtruth = recaclulate_groundtruth(ids, groundtruth)
+    recalculated_groundtruth = recalculate_groundtruth(ids, groundtruth)
     
     # 保存base数据
     base_filename = output_path / "space100m_base.fvecs"
@@ -124,7 +125,7 @@ def process_space100m_dataset(output_dir: str):
     
     # 保存ground truth数据 (matches -> ivecs)
     gt_filename = output_path / "space100m_groundtruth.ivecs"
-    write_ivecs(str(gt_filename), recaclulated_groundtruth)
+    write_ivecs(str(gt_filename), recalculated_groundtruth)
     
     # # 保存距离数据 (distances -> fvecs)
     # distances_filename = output_path / "space100m_distances.fvecs"
@@ -160,7 +161,7 @@ def process_space100m_dataset(output_dir: str):
 def main():
     parser = argparse.ArgumentParser(description="处理SPACE100M数据集，转换为fvecs和ivecs格式")
     parser.add_argument("--output", type=str,
-                       default="/home/adrian/code/vcluster-system/data/ann-spacev-100m",
+                       default=str(Path(__file__).resolve().parents[2] / "data" / "ann-spacev-100m"),
                        help="输出目录路径")
     
     args = parser.parse_args()

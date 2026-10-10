@@ -2,6 +2,7 @@
 all: clean grpc build image logrotate
 
 pwd := $(shell pwd)
+NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
 .PHONY: build
 build: engine worker scheduler client
@@ -29,7 +30,7 @@ scheduler:
 .PHONY: engine
 engine:
 	@echo "building engine"
-	@cd internal/engine && mkdir -p build && cd build && cmake .. && make  -j$(nproc)
+	@cd internal/engine && mkdir -p build && cd build && cmake .. && make -j$(NPROC)
 
 .PHONY: pybind
 pybind:
@@ -39,7 +40,7 @@ pybind:
 .PHONY: image
 image:
 	@echo "building image"
-	@docker build -t vcluster-system .
+	@docker build -t titan .
 
 .PHONY: clean
 clean:
@@ -55,4 +56,4 @@ grpc:
 .PHONY: config
 config:
 	@echo "building config"
-	@sh ./generate_config.sh
+	@sh ./script/generate_config.sh

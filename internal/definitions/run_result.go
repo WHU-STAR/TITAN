@@ -48,7 +48,7 @@ func (rr *RunResult) WriteToCsv(csvPath string) error {
 	}
 	file, err := os.OpenFile(csvPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("打开文件失败: %v", err)
+		return fmt.Errorf("failed to open file: %v", err)
 	}
 	defer file.Close()
 
@@ -57,12 +57,12 @@ func (rr *RunResult) WriteToCsv(csvPath string) error {
 	if !fileExists {
 		header := []string{"meta_k", "top_k", "worker_top_k", "ef_search", "thresh", "n_probe", "lambda", "recall", "qps", "avg_time", "p50_time", "p95_time", "p99_time"}
 		if err := writer.Write(header); err != nil {
-			return fmt.Errorf("写入文件头失败: %v", err)
+			return fmt.Errorf("failed to write header: %v", err)
 		}
 	}
 	row := rr.ToCsvRow()
 	if err := writer.Write(row); err != nil {
-		return fmt.Errorf("写入数据失败: %v", err)
+		return fmt.Errorf("failed to write row: %v", err)
 	}
 
 	return nil

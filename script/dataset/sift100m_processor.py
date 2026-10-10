@@ -76,10 +76,10 @@ def process_sift100m_dataset(hdf5_path: str, output_dir: str):
 def main():
     parser = argparse.ArgumentParser(description="处理SIFT100M数据集，转换为fvecs和ivecs格式")
     parser.add_argument("--input", type=str, 
-                       default="/home/adrian/code/vcluster-system/data/sift100m/sift100m-128-euclidean.hdf5",
+                       default=str(Path(__file__).resolve().parents[2] / "data" / "sift100m" / "sift100m-128-euclidean.hdf5"),
                        help="输入HDF5文件路径")
     parser.add_argument("--output", type=str,
-                       default="/home/adrian/code/vcluster-system/data/sift100m",
+                       default=str(Path(__file__).resolve().parents[2] / "data" / "sift100m"),
                        help="输出目录路径")
     
     args = parser.parse_args()

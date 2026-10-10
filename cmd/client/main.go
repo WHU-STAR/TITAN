@@ -20,8 +20,8 @@ var (
 	ClientAddress    string
 	QuerySetPath     string
 	GroundTruthPath  string
-	RunEpochs        int    // 重复运行的次数
-	RunName          string // 运行名称，用于保存结果
+	RunEpochs        int    // repetitions of each configuration
+	RunName          string // name used when saving results
 )
 
 const (
@@ -31,14 +31,13 @@ const (
 	MAX_RETRY_COUNT           = 7
 )
 
-// ExperimentConfig 实验配置结构体
+// ExperimentConfig is the sweep configuration.
 type ExperimentConfig struct {
-	TopKs           map[int][]int
-	EfSearchs       []int
-	MetaKs          []int
-	// MetaKAndEfSearch 允许显式指定 MetaK 与 EfSearch 的组合：
-	// 形如 [[metaK, efSearch], ...]。如果该字段非空，则生成实验参数时
-	// 仅使用该字段给出的组合，而忽略独立的 MetaKs 与 EfSearchs。
+	TopKs     map[int][]int
+	EfSearchs []int
+	MetaKs    []int
+	// MetaKAndEfSearch lists explicit [metaK, efSearch] pairs.
+	// When non-empty, only these pairs are expanded.
 	MetaKAndEfSearch [][]int
 	Thresholds       []int
 	NProbes          []int
@@ -68,7 +67,7 @@ func skippable(param definitions.ExperimentParams) bool {
 	return false
 }
 
-// isInSkippedParams 检查参数是否已经在SkippedParams中
+// isInSkippedParams reports whether this configuration was already skipped.
 func isInSkippedParams(param definitions.ExperimentParams) bool {
 	for _, skippedParam := range SkippedParams {
 		if param.FinalTopK == skippedParam.FinalTopK &&
@@ -84,7 +83,7 @@ func isInSkippedParams(param definitions.ExperimentParams) bool {
 	return false
 }
 
-// initializeClient 初始化客户端
+// initializeClient loads queries and ground truth.
 func initializeClient() (*client.Client, error) {
 	ClientAddress = config.Config.GetClientAddress()
 	client := client.NewClient(ClientAddress)
@@ -102,7 +101,7 @@ func initializeClient() (*client.Client, error) {
 	return client, nil
 }
 
-// waitForServerInitialization 等待服务器初始化完成
+// waitForServerInitialization blocks until workers are ready.
 func waitForServerInitialization(client *client.Client, ctx context.Context) error {
 	ticker := time.NewTicker(4 * time.Second)
 	defer ticker.Stop()
@@ -120,22 +119,22 @@ func waitForServerInitialization(client *client.Client, ctx context.Context) err
 	}
 }
 
-// getExperimentConfig 获取实验配置
+// getExperimentConfig reads the active cluster config.
 func getExperimentConfig() ExperimentConfig {
 	return ExperimentConfig{
-		TopKs:           config.Config.TopK,
-		EfSearchs:       config.Config.EfSearch,
-		MetaKs:          config.Config.MetaK,
+		TopKs:            config.Config.TopK,
+		EfSearchs:        config.Config.EfSearch,
+		MetaKs:           config.Config.MetaK,
 		MetaKAndEfSearch: config.Config.MetaKAndEfSearch,
-		Thresholds:      config.Config.Thresh,
-		NProbes:         config.Config.NProbe,
-		QueryCount:      config.Config.QueryCount,
-		Epochs:          config.Config.Epochs,
-		PruningLambdas:  config.Config.PruningLambdas,
+		Thresholds:       config.Config.Thresh,
+		NProbes:          config.Config.NProbe,
+		QueryCount:       config.Config.QueryCount,
+		Epochs:           config.Config.Epochs,
+		PruningLambdas:   config.Config.PruningLambdas,
 	}
 }
 
-// generateExperimentParams 生成所有实验参数组合
+// generateExperimentParams expands the parameter grid.
 func generateExperimentParams(config ExperimentConfig) []definitions.ExperimentParams {
 	var params []definitions.ExperimentParams
 
@@ -233,14 +232,14 @@ func configureClient(client *client.Client, params definitions.ExperimentParams)
 	return lastErr
 }
 
-// runSingleExperiment 运行单次实验
+// runSingleExperiment runs one parameter combination.
 func runSingleExperiment(client *client.Client, params definitions.ExperimentParams, queryCount int) (definitions.RunResult, error) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	skipFunc := func(recall float64) {
 		if recall >= config.Config.RecallGoal {
-			// 检查是否已经在SkippedParams中，避免重复添加
+			// Skip configurations that already met the recall target.
 			if !isInSkippedParams(params) {
 				logger.Info(fmt.Sprintf("Recall reached goal. Adding current parameters to skip list: %s",
 					params.ToString()))
@@ -252,7 +251,7 @@ func runSingleExperiment(client *client.Client, params definitions.ExperimentPar
 
 	logger.Info("Starting experiment with parameters: " + params.ToString())
 
-	// 启动查询
+	// Submit queries.
 	go func() {
 		defer wg.Done()
 		client.StartQuery(queryCount, params.FinalTopK, params.WorkerTopK)
@@ -260,7 +259,7 @@ func runSingleExperiment(client *client.Client, params definitions.ExperimentPar
 
 	res := definitions.RunResult{}
 
-	// 处理结果
+	// Collect results.
 	go func() {
 		defer wg.Done()
 		res = client.HandleResult(queryCount, skipFunc)
@@ -270,7 +269,7 @@ func runSingleExperiment(client *client.Client, params definitions.ExperimentPar
 	return res, nil
 }
 
-// runExperiments 运行所有实验
+// runExperiments runs the parameter grid.
 func runExperiments(client *client.Client, experimentConf ExperimentConfig, params []definitions.ExperimentParams) error {
 	totalIterations := len(params)
 	startTime := time.Now()
@@ -283,7 +282,7 @@ func runExperiments(client *client.Client, experimentConf ExperimentConfig, para
 			continue
 		}
 
-		// 配置客户端
+		// Configure the client.
 		if err := configureClient(client, param); err != nil {
 			return fmt.Errorf("failed to configure client: %w", err)
 		}
@@ -294,7 +293,7 @@ func runExperiments(client *client.Client, experimentConf ExperimentConfig, para
 		logger.Info(fmt.Sprintf("ClientQueryCount: %d", experimentConf.QueryCount))
 
 		experimentConf.QueryCount = min(experimentConf.QueryCount, int(client.QueryData.Num))
-		// 计算进度
+		// Progress.
 		for epoch := range experimentConf.Epochs {
 			progress := float64(i+1) / float64(totalIterations) * 100
 			elapsed := time.Since(startTime)
@@ -303,12 +302,12 @@ func runExperiments(client *client.Client, experimentConf ExperimentConfig, para
 				eta = time.Duration(float64(elapsed) / float64(i+1) * float64(totalIterations-i-1))
 			}
 
-			// 记录参数
+			// Record the parameters.
 			log.Printf("Epoch: %d, Progress: %.2f%%, Elapsed: %s, ETA: %s\n",
 				epoch+1, progress, elapsed.Truncate(time.Second), eta.Truncate(time.Second))
 			log.Printf("TotalIterations: %d, CurrentIteration: %d\n", totalIterations, i+1)
 
-			// 运行实验
+			// Run this configuration.
 			res, err := runSingleExperiment(client, param, experimentConf.QueryCount)
 			if err != nil {
 				return fmt.Errorf("failed to run experiment: %w", err)
@@ -331,22 +330,22 @@ func runExperiments(client *client.Client, experimentConf ExperimentConfig, para
 		}
 	}
 
-	// 打印统计信息
-	log.Println("\n========== 实验统计信息 ==========")
-	log.Printf("总参数组合数: %d\n", totalIterations)
-	log.Printf("实际跳过的参数组合数: %d\n", actualSkippedCount)
-	log.Printf("实际运行的参数组合数: %d\n", totalIterations-actualSkippedCount)
-	log.Printf("达到目标recall的参数组合数: %d\n", len(SkippedParams))
+	// Print the summary.
+	log.Println("\n========== experiment summary ==========")
+	log.Printf("configurations: %d\n", totalIterations)
+	log.Printf("skipped: %d\n", actualSkippedCount)
+	log.Printf("executed: %d\n", totalIterations-actualSkippedCount)
+	log.Printf("met recall target: %d\n", len(SkippedParams))
 
 	if len(SkippedParams) > 0 {
-		log.Println("\n达到目标recall的参数组合:")
+		log.Println("\nconfigurations that met the recall target:")
 		for i, param := range SkippedParams {
 			log.Printf("%d. %s\n", i+1, param.ToString())
 		}
 	}
 
 	if actualSkippedCount > 0 {
-		log.Println("\n实际被跳过的参数组合:")
+		log.Println("\nconfigurations that were skipped:")
 		for i, param := range ActuallySkipped {
 			log.Printf("%d. %s\n", i+1, param.ToString())
 		}
@@ -364,22 +363,22 @@ func NewClientCmd() *cobra.Command {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			// 初始化客户端
+			// Initialize the client.
 			client, err := initializeClient()
 			if err != nil {
 				log.Fatalf("Failed to initialize client: %v", err)
 			}
 			defer client.Stop()
 
-			// 启动gRPC服务器
+			// Start the result server.
 			go client.StartGRPCServer()
 
-			// 获取实验配置
+			// Load the experiment config.
 			expConfig := getExperimentConfig()
 			ClientQueryCount = expConfig.QueryCount
 
 			expParams := generateExperimentParams(expConfig)
-			// 记录配置信息
+			// Log the config.
 			log.Println("MetaK:", expConfig.MetaKs)
 			if len(expConfig.MetaKAndEfSearch) > 0 {
 				log.Println("MetaKAndEfSearch (pairs [metaK, efSearch]):", expConfig.MetaKAndEfSearch)
@@ -394,12 +393,12 @@ func NewClientCmd() *cobra.Command {
 			log.Println("GroundTruthPath:", GroundTruthPath)
 			log.Println("Total number of experiment params generated: ", len(expParams))
 
-			// 等待服务器初始化
+			// Wait until the cluster is ready.
 			if err := waitForServerInitialization(client, ctx); err != nil {
 				log.Fatalf("Server initialization failed: %v", err)
 			}
 
-			// 运行实验
+			// Run this configuration.
 			if err := runExperiments(client, expConfig, expParams); err != nil {
 				log.Fatalf("Experiment failed: %v", err)
 			}

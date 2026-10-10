@@ -39,7 +39,6 @@ func (s *SchedulerServer) CompleteTask(ctx context.Context, req *pb.TaskComplete
 
 func (s *SchedulerServer) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
 	s.scheduler.Heartbeat(ctx, req)
-	// 简单的心跳处理
 	return &pb.HeartbeatResponse{
 		Alive:     true,
 		NodeTable: s.scheduler.GetNodeTable(),
@@ -182,7 +181,6 @@ func (s *SchedulerServer) SetNProbe(ctx context.Context, req *pb.SetNProbeReques
 }
 
 func (s *SchedulerServer) IsInitialized(ctx context.Context, req *emptypb.Empty) (*pb.IsInitializedResponse, error) {
-	// TODO: read from server
 	isInitialized := s.scheduler.IsInitialized()
 
 	return &pb.IsInitializedResponse{

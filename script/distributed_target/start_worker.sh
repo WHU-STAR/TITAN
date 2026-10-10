@@ -3,12 +3,12 @@
 #      This script is meant to be run under its direct parent directory.
 ################################################################################
 
-VCLUSTER_CONFIG_BUILDER=default_distributed
+TITAN_CONFIG_BUILDER=default_distributed
 NAIVE_ARG=""
 while getopts "b:i:p:a:s:n" opt; do
   case $opt in
   b)
-    export VCLUSTER_CONFIG_BUILDER="$OPTARG"
+    export TITAN_CONFIG_BUILDER="$OPTARG"
     ;;
   i)
     WORKER_ID="$OPTARG"

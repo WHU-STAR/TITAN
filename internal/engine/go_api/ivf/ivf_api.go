@@ -79,19 +79,19 @@ func (idx *Index) SearchKNN(query []float32, bucketIds []uint32, topk int) ([]ui
 		return nil, nil, fmt.Errorf("invalid topk")
 	}
 
-	// 将 bucketIds 转换为 C 数组，并添加 -1 作为终止符
+	// Convert bucket ids to a C array terminated by -1.
 	cBucketIds := make([]C.int, len(bucketIds)+1)
 	for i, id := range bucketIds {
 		cBucketIds[i] = C.int(id)
 	}
-	cBucketIds[len(bucketIds)] = C.int(-1) // 添加终止符
+	cBucketIds[len(bucketIds)] = C.int(-1) // terminator
 
 	cQuery := (*C.float)(unsafe.Pointer(&query[0]))
 
 	labels := make([]C.size_t, topk)
 	distances := make([]C.float, topk)
 
-	// 调用 C 函数进行搜索
+	// Call the C search.
 	C.ivf_search_knn(
 		idx.index,
 		cQuery,
@@ -101,20 +101,20 @@ func (idx *Index) SearchKNN(query []float32, bucketIds []uint32, topk int) ([]ui
 		(*C.float)(&distances[0]),
 	)
 
-	// 过滤掉无效的结果
+	// Drop invalid labels.
 	validLabels := make([]uint32, 0, topk)
 	validDistances := make([]float32, 0, topk)
 	for i := len(labels) - 1; i >= 0; i-- {
 		label := uint32(labels[i])
 		if label == math.MaxUint32 {
-			// 跳过无效的标签
+			// Skip an empty slot.
 			continue
 		}
 		validLabels = append(validLabels, label)
 		validDistances = append(validDistances, float32(distances[i]))
 	}
 
-	// 返回结果，不需要进行标签转换，因为 C 层返回的就是绝对标签
+	// Labels are already global ids.
 	return validLabels, validDistances, nil
 }
 

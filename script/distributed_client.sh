@@ -26,8 +26,8 @@ while getopts "r:u:" opt; do
   esac
 done
 
-if [[ -z "$VCLUSTER_CONFIG_BUILDER" ]]; then
-  VCLUSTER_CONFIG_BUILDER=default_distributed
+if [[ -z "$TITAN_CONFIG_BUILDER" ]]; then
+  TITAN_CONFIG_BUILDER=default_distributed
 fi
 
 if [[ -z "$target_user" ]]; then
@@ -38,7 +38,7 @@ fi
 go build -o ../bin/client ../cmd/client
 
 CLIENT_IP="vsys-client"
-REMOTE_DIR="/data/vcluster-system/bin" # worker 程序所在路径
+REMOTE_DIR="/data/titan/bin" # worker 程序所在路径
 CLIENT_BIN="client"
 
 # Start the client with default parameters
@@ -46,7 +46,7 @@ CLIENT_BIN="client"
 # cd bin
 # ./client start --top_k=10 --delay=0 --run_name="$runName" --query_set_path="$query_set_path" --ground_truth_path="$ground_truth_path"
 echo "starting client..."
-CMD="cd $REMOTE_DIR && VCLUSTER_CONFIG_BUILDER=$VCLUSTER_CONFIG_BUILDER ./$CLIENT_BIN start --run_name=$runName --query_set_path=$query_set_path --ground_truth_path=$ground_truth_path"
+CMD="cd $REMOTE_DIR && TITAN_CONFIG_BUILDER=$TITAN_CONFIG_BUILDER ./$CLIENT_BIN start --run_name=$runName --query_set_path=$query_set_path --ground_truth_path=$ground_truth_path"
 
 ssh -n "$target_user@$CLIENT_IP" "$CMD"
 

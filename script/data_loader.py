@@ -104,13 +104,9 @@ data_paths_dict = {
         "groundtruth": "../data/laion-t2i-10m/laion_t2i_groundtruth.ivecs",
     },
     "sift1b": {
-        # base is the float32 fbin converted from base.1B.u8bin (1B x 128).
-        # Lives on /nvme for fast memmap reads; loaded lazily via read_fbin.
-        "base": "/nvme/sift1b_base.fbin",
-        # query/groundtruth are not present on this machine; the build only
-        # needs base. get_dataset tolerates their absence (returns None).
-        "query": "/home/adrian/code/TITAN-rebuttal/data/sift1b/bigann_query.bvecs",
-        "groundtruth": "/home/adrian/code/TITAN-rebuttal/data/sift1b/bigann_groundtruth.ivecs",
+        "base": "../data/sift1b/sift1b_base.fbin",
+        "query": "../data/sift1b/bigann_query.bvecs",
+        "groundtruth": "../data/sift1b/bigann_groundtruth.ivecs",
     },
 }
 

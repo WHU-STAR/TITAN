@@ -12,6 +12,7 @@ RUN go mod download
 
 # Copy source code
 COPY . .
+RUN mkdir -p data log pids
 
 # Clean and build
 RUN make clean && \

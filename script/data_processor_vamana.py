@@ -291,7 +291,6 @@ def pre_partition_buckets(
         # 每一个bucket质心进行二次聚类，得到的node label
         buckets_node_labels = bucket_kmeans.fit_predict(bucket_centroids)
     else:
-        # TODO: implement spectral clustering
         raise ValueError(f"Unsupported bucket cluster method: {bucket_cluster_method}")
 
     dirpath = f"data/{dataset_name}_worker_data_vamana_{method_name}"

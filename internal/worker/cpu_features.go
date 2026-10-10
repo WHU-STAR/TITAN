@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// CPUFeatures 存储CPU特性信息
+// CPUFeatures records SIMD features.
 type CPUFeatures struct {
 	AVX2 bool
 	SSE2 bool
@@ -16,7 +16,7 @@ type CPUFeatures struct {
 
 var cpuFeatures *CPUFeatures
 
-// GetCPUFeatures 获取当前CPU的特性
+// GetCPUFeatures returns the detected features.
 func GetCPUFeatures() *CPUFeatures {
 	if cpuFeatures == nil {
 		cpuFeatures = detectCPUFeatures()
@@ -24,61 +24,61 @@ func GetCPUFeatures() *CPUFeatures {
 	return cpuFeatures
 }
 
-// detectCPUFeatures 检测CPU特性
+// detectCPUFeatures fills the feature struct.
 func detectCPUFeatures() *CPUFeatures {
 	features := &CPUFeatures{}
 
-	// 根据架构设置默认特性
+	// Architecture defaults.
 	switch runtime.GOARCH {
 	case "amd64":
-		features.SSE2 = true // SSE2在x86_64上是标准特性
+		features.SSE2 = true // required on x86_64
 		features.AVX = detectAVX()
 		features.AVX2 = detectAVX2()
 		features.FMA = detectFMA()
 	case "arm64":
-		features.NEON = true // NEON在ARM64上是标准特性
+		features.NEON = true // required on arm64
 	}
 
 	return features
 }
 
-// detectAVX 检测AVX支持
+// detectAVX reports AVX support.
 func detectAVX() bool {
-	// 实际实现中应该使用cpuid指令
-	// 这里简化处理，在x86_64平台上假设支持
+	// A production build should query CPUID.
+	// Assume support on x86_64.
 	return runtime.GOARCH == "amd64"
 }
 
-// detectAVX2 检测AVX2支持
+// detectAVX2 reports AVX2 support.
 func detectAVX2() bool {
-	// 实际实现中应该使用cpuid指令
-	// 这里简化处理，在x86_64平台上假设支持
+	// A production build should query CPUID.
+	// Assume support on x86_64.
 	return runtime.GOARCH == "amd64"
 }
 
-// detectFMA 检测FMA支持
+// detectFMA reports FMA support.
 func detectFMA() bool {
-	// 实际实现中应该使用cpuid指令
-	// 这里简化处理，在x86_64平台上假设支持
+	// A production build should query CPUID.
+	// Assume support on x86_64.
 	return runtime.GOARCH == "amd64"
 }
 
-// hasAVX2 检查是否支持AVX2
+// hasAVX2 reports AVX2.
 func hasAVX2() bool {
 	return GetCPUFeatures().AVX2
 }
 
-// hasSSE2 检查是否支持SSE2
+// hasSSE2 reports SSE2.
 func hasSSE2() bool {
 	return GetCPUFeatures().SSE2
 }
 
-// hasNEON 检查是否支持NEON
+// hasNEON reports NEON.
 func hasNEON() bool {
 	return GetCPUFeatures().NEON
 }
 
-// GetOptimalSIMDType 获取最优的SIMD类型
+// GetOptimalSIMDType returns the preferred SIMD path.
 func GetOptimalSIMDType() string {
 	features := GetCPUFeatures()
 
@@ -102,18 +102,18 @@ func GetOptimalSIMDType() string {
 	return "SCALAR"
 }
 
-// PrintCPUInfo 打印CPU信息
+// PrintCPUInfo formats a CPU summary.
 func PrintCPUInfo() string {
 	features := GetCPUFeatures()
 	arch := runtime.GOARCH
 	os := runtime.GOOS
 
 	var info strings.Builder
-	info.WriteString("CPU架构: " + arch + "\n")
-	info.WriteString("操作系统: " + os + "\n")
-	info.WriteString("最优SIMD类型: " + GetOptimalSIMDType() + "\n")
+	info.WriteString("arch: " + arch + "\n")
+	info.WriteString("os: " + os + "\n")
+	info.WriteString("simd: " + GetOptimalSIMDType() + "\n")
 
-	info.WriteString("支持的SIMD指令集:\n")
+	info.WriteString("instruction sets:\n")
 	if features.AVX2 {
 		info.WriteString("  ✓ AVX2\n")
 	}

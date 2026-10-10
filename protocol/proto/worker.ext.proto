@@ -4,16 +4,16 @@ package pb;
 
 import "google/protobuf/empty.proto";
 
-option go_package = "vcluster-system/protocol/pb";
+option go_package = "github.com/WHU-STAR/TITAN/protocol/pb";
 
 service WorkerExtService {
-  // 处理任务，这里主要是指元索引查询
+  // Accept a task from the scheduler.
   rpc ProcessTask(TaskProcessRequest) returns (google.protobuf.Empty);
 
-  // 节点表更新
+  // Update the worker address table.
   rpc UpdateNodeTable(UpdateNodeTableRequest) returns (UpdateNodeTableResponse);
 
-  // 获取节点状态
+  // Read the worker load score.
   rpc GetScore(google.protobuf.Empty) returns (GetScoreResponse);
   rpc GetMetaQueryTotal(google.protobuf.Empty) returns (GetQueryTotalResponse);
   rpc GetInternalQueryTotal(google.protobuf.Empty)
@@ -29,8 +29,8 @@ service WorkerExtService {
   rpc SetEFSearch(SetEFSearchRequest) returns (SetterResponse);
   rpc SetThreshold(SetThresholdRequest) returns (SetterResponse);
   rpc SetMetaK(SetMetaKRequest) returns (SetterResponse);
-  rpc SetLambda(SetLambdaRequest) returns (SetterResponse);
   rpc SetNProbe(SetNProbeRequest) returns (SetterResponse);
+  rpc SetLambda(SetLambdaRequest) returns (SetterResponse);
   rpc GetNodeTableSize(google.protobuf.Empty) returns (GetNodeTableSizeResponse);
 }
 

@@ -54,7 +54,7 @@ func ReadFVECS(path string) ([][]float32, error) {
 
 	var vectors [][]float32
 	for {
-		// 读取维度（4字节）
+		// Read the dimension (4 bytes).
 		dimBuf := make([]byte, 4)
 		_, err := io.ReadFull(file, dimBuf)
 		if err == io.EOF {
@@ -64,14 +64,14 @@ func ReadFVECS(path string) ([][]float32, error) {
 		}
 		dim := int(binary.LittleEndian.Uint32(dimBuf))
 
-		// 读取向量数据（4*dim字节）
+		// Read the vector payload.
 		dataBuf := make([]byte, 4*dim)
 		_, err = io.ReadFull(file, dataBuf)
 		if err != nil {
 			return nil, err
 		}
 
-		// 转换为float32切片
+		// Convert to float32.
 		vector := make([]float32, dim)
 		for i := 0; i < dim; i++ {
 			start := i * 4
@@ -94,7 +94,7 @@ func ReadIVECS(path string) ([][]uint32, error) {
 
 	var vectors [][]uint32
 	for {
-		// 读取维度（4字节）
+		// Read the dimension (4 bytes).
 		dimBuf := make([]byte, 4)
 		_, err := io.ReadFull(file, dimBuf)
 		if err == io.EOF {
@@ -104,14 +104,14 @@ func ReadIVECS(path string) ([][]uint32, error) {
 		}
 		dim := int(binary.LittleEndian.Uint32(dimBuf))
 
-		// 读取向量数据（4*dim字节）
+		// Read the vector payload.
 		dataBuf := make([]byte, 4*dim)
 		_, err = io.ReadFull(file, dataBuf)
 		if err != nil {
 			return nil, err
 		}
 
-		// 转换为int32切片
+		// Convert to uint32.
 		vector := make([]uint32, dim)
 		for i := 0; i < dim; i++ {
 			start := i * 4
@@ -125,7 +125,7 @@ func ReadIVECS(path string) ([][]uint32, error) {
 }
 
 func LoadGroundTruth(path string) (*GroundTruth, error) {
-	// 嵌套一层，获取元数据
+	// Load the vectors, then fill metadata.
 	groundTruth, err := ReadIVECS(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read ground truth: %v", err)
@@ -137,7 +137,7 @@ func LoadGroundTruth(path string) (*GroundTruth, error) {
 }
 
 func LoadQuerySet(path string) (*QueryData, error) {
-	// 嵌套一层，获取元数据
+	// Load the vectors, then fill metadata.
 	queries, err := ReadFVECS(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read queries: %v", err)
@@ -207,19 +207,17 @@ func LoadMetaIndexData(path string, searchMethod string) (*MetaIndexData, error)
 	}
 
 	bucketRadiuses := make([]float32, numBuckets)
-	if searchMethod == "rf" || searchMethod == "hf" || searchMethod == "hf-v2" {
-		if err := binary.Read(file, binary.LittleEndian, bucketRadiuses); err != nil {
-			return nil, fmt.Errorf("failed to read bucket radiuses: %v", err)
-		}
+	if err := binary.Read(file, binary.LittleEndian, bucketRadiuses); err != nil {
+		return nil, fmt.Errorf("failed to read bucket radiuses: %v", err)
 	}
 
 	var bucketSizes []uint32
 	var totalNumVectors uint32
-	if searchMethod == "rf" || searchMethod == "hf" || searchMethod == "hf-v2" {
-		curPos, err := file.Seek(0, io.SeekCurrent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to seek meta index file: %v", err)
-		}
+	curPos, err := file.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to seek meta index file: %v", err)
+	}
+	{
 		fi, err := file.Stat()
 		if err == nil && fi.Size() >= curPos+int64(numBuckets)*4+4 {
 			sizes := make([]uint32, numBuckets)
@@ -300,7 +298,7 @@ func LoadNodeData(path string) (*NodeData, error) {
 	// Calculate total size of bucket data
 	totalDataSize := int(0)
 	for _, size := range dataSizePerBucket {
-		totalDataSize += int(size) * int(dim) // 每个点都是 dim 维的
+		totalDataSize += int(size) * int(dim) // each point has dim floats
 	}
 
 	// Read bucket data as float32
@@ -317,7 +315,7 @@ func LoadNodeData(path string) (*NodeData, error) {
 	logger.Debug("len dataSizePerBucket", zap.Int("len", len(dataSizePerBucket)))
 
 	for i := range buckets {
-		numPoints := int(dataSizePerBucket[i]) // 这是点的数量
+		numPoints := int(dataSizePerBucket[i]) // number of points in the bucket
 		buckets[i] = definitions.Bucket{
 			BucketId: bucketIndices[i],
 			Count:    int32(numPoints),
@@ -329,12 +327,12 @@ func LoadNodeData(path string) (*NodeData, error) {
 			pointStart := offset + j*int(dim)
 			pointEnd := pointStart + int(dim)
 			buckets[i].Points[j] = definitions.Point{
-				PointId: uint32(absoluteLabelIndices[pointOffset+j]), // 使用累积的 pointOffset
+				PointId: uint32(absoluteLabelIndices[pointOffset+j]),
 				Data:    bucketData[pointStart:pointEnd],
 			}
 		}
-		offset += numPoints * int(dim) // 每个 bucket 的数据偏移量需要乘以维度
-		pointOffset += numPoints       // 累积点的偏移量
+		offset += numPoints * int(dim) // advance by the bucket's floats
+		pointOffset += numPoints       // advance the id cursor
 	}
 
 	// Verify we've read the entire file

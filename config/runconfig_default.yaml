@@ -1,7 +1,6 @@
 #                 Template configuration file for the runconfig.yaml                                    #
 #  Use `make config` to generate a new runconfig.yaml file in project root directory                    #
 
-
 default: &default # base setting
   schedulerIP: "localhost"
   schedulerPort: 50050
@@ -11,7 +10,7 @@ default: &default # base setting
   metaK: [100]
   threshold: [0]
   nProbe: [0]
-  pruningLambda: 0.8
+  pruningLambda: [0.8]
   queryCount: 1000
   epochs: 10
   # topK: [20]
@@ -25,14 +24,13 @@ default: &default # base setting
     - [40, 80]
   metaIndexType: "hnsw"
   nodeIndexType: "hnsw"
-  searchMethod: "default" # Options: "default", "rf", "hf", "hf-v2"
-  pruningStrategy: "angular" # Options: "angular", "angular-v2", "centroid-distance", "distance-minus-radius", "fixed-topk"
+  searchMethod: "default" # default and hf share the unpruned query path
+  pruningStrategy: "angular" # retained for configuration; pruning is not applied yet
   recallGoal: 0.99
   recallMinimum: 0.88
   efSearch: [100]
 
-
-default_local:  &default_local
+default_local: &default_local
   <<: *default
   schedulerIP: "localhost"
   schedulerPort: 50050
@@ -58,7 +56,7 @@ deep_10m_10:
   threshold: [0]
   efSearch: [100]
 
-default_distributed:  &default_distributed
+default_distributed: &default_distributed
   <<: *default
   schedulerIP: "192.168.0.104"
   schedulerPort: 50050

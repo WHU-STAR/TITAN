@@ -25,7 +25,7 @@ import random
 import struct
 import hnswlib
 import networkx as nx
-from bucket_cluster_algorithm import adaptive_kmeans, graph_partition, kmeans
+from bucket_cluster_algorithm import graph_partition, kmeans
 from hierarchical_kmeans import hierarchical_KMeans
 from data_writer import (
     save_node_data,
@@ -36,7 +36,7 @@ from data_writer import (
 EF = 200  # ef_construction
 M = 32
 THREAD_NUM = -1
-NUM_OVERLAP = 1  # overlap num of nodes, default set to 2, equals when using similarity-based partition, overlapping item to 2 nodes.
+NUM_OVERLAP = 1  # partitions per bucket when overlap_num is omitted
 
 # DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 DEVICE = "cpu"
@@ -56,7 +56,6 @@ def np_find_nearest_point_idx_and_furthest_distance(
         distances = np.sum((data - target) ** 2, axis=1)
         distances = np.sqrt(distances)
     elif space == "cosine":
-        # TODO: figure out
         data_norm = np.linalg.norm(data, axis=1)
         target_norm = np.linalg.norm(target)
         distances = 1 - np.dot(data, target) / (data_norm * target_norm)
@@ -73,9 +72,7 @@ def pre_partition_buckets(
     bucket_labels: np.ndarray,
     bucket_centroids: np.ndarray,
     num_nodes: int,
-    bucket_cluster_method: Literal[
-        "kmeans", "adaptive_kmeans", "graph_partition"
-    ] = "kmeans",
+    bucket_cluster_method: Literal["kmeans", "graph_partition"] = "kmeans",
     graph_type: Literal["hnsw", "bf", "both"] = "hnsw",
     M: int = M,
     ef_construction: int = EF,
@@ -93,17 +90,11 @@ def pre_partition_buckets(
 
     if bucket_cluster_method == "kmeans":
         bucket_node_assignments = kmeans(bucket_centroids, num_nodes, num_overlap)
-    elif bucket_cluster_method == "adaptive_kmeans":
-        bucket_node_assignments = adaptive_kmeans(bucket_centroids, num_nodes)
     elif bucket_cluster_method == "graph_partition":
         bucket_node_assignments = graph_partition(bucket_centroids, num_nodes, num_max_assignments=num_overlap)
 
     # Save the bucket node assignments and centroids
-    if bucket_cluster_method == "adaptive_kmeans":
-        dirpath = (
-            f"../data/{schema_name}_worker_data_hnsw_{method_name}_adaptive_kmeans"
-        )
-    elif bucket_cluster_method == "graph_partition":
+    if bucket_cluster_method == "graph_partition":
         dirpath = (
             f"../data/{schema_name}_worker_data_hnsw_{method_name}_graph_partition"
         )
@@ -559,7 +550,7 @@ def pyramid_partition_buckets(
     dataset_name: str,
     method_name: str,
     data: np.ndarray,
-    imblance_factor: float,
+    imbalance_factor: float,
     sample_num: int,
     num_nodes: int,
     graph_type: Literal["hnsw", "bf", "both"] = "hnsw",
@@ -637,7 +628,7 @@ def pyramid_partition_buckets(
     # edgecut: the number of edges that are cut by the partition
     # blocks: the partition labels
 
-    edgecut,blocks = kahip.kaffpa(vwgt, xadj, adjcwgt, adjncy, num_nodes, imblance_factor, 0, 0, 0)
+    edgecut,blocks = kahip.kaffpa(vwgt, xadj, adjcwgt, adjncy, num_nodes, imbalance_factor, 0, 0, 0)
 
     # Convert to numpy array to ensure compatibility
     sample_partition_labels = np.array(blocks, dtype=np.int32)
@@ -826,10 +817,8 @@ if __name__ == "__main__":
     param_config_keys = list(param_config.keys())
     partition_config_keys = list(partition_config.keys())
 
-    # DEPRECATED: adaptive_kmeans
     bucket_cluster_method_keys = [
         "kmeans",
-        "adaptive_kmeans",
         "graph_partition",
     ]
     fzf = FzfPrompt()
@@ -940,7 +929,7 @@ if __name__ == "__main__":
             dataset_name,
             chosen_method,
             base,
-            imblance_factor=partition_params["imblance_factor"],
+            imbalance_factor=partition_params["imbalance_factor"],
             sample_num=partition_params["sample_num"],
             num_nodes=partition_params["partition_num"],
             graph_type=graph_type,

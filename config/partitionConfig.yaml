@@ -80,7 +80,7 @@ pyramid_16_hnsw: &pyramid_16
   k: 10
   ef_construction: 200
   partition_num: 16
-  imblance_factor: 0.03
+  imbalance_factor: 0.03
   sample_num: 1000000
 
 pyramid_4_hnsw:
@@ -109,7 +109,7 @@ pyramid_16_hnsw_0.2mbkt:
 
 pyramid_16_hnsw_1kbkt:
   <<: *pyramid_16
-  imblance_factor: 0.2
+  imbalance_factor: 0.2
   sample_num: 1000
 pyramid_32_hnsw:
   <<: *pyramid_16

@@ -10,4 +10,3 @@ type Node struct {
 	Score    int
 	LastPing time.Time
 }
-

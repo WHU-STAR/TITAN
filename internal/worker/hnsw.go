@@ -63,6 +63,5 @@ func (h *HNSWIndex) GetAvgDistComputations() float32 {
 }
 
 func (h *HNSWIndex) GetDataSize() uint32 {
-	// TODO: implement
 	return 0
 }

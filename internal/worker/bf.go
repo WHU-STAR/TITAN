@@ -59,6 +59,5 @@ func (b *BFIndex) GetAvgDistComputations() float32 {
 }
 
 func (b *BFIndex) GetDataSize() uint32 {
-	// TODO: implement
 	return 0
 }

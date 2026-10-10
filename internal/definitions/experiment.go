@@ -2,7 +2,7 @@ package definitions
 
 import "fmt"
 
-// ExperimentParams 单次实验参数
+// ExperimentParams is one experiment configuration.
 type ExperimentParams struct {
 	FinalTopK     int
 	WorkerTopK    int

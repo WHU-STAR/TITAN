@@ -1,4 +1,4 @@
-VCLUSTER_CONFIG_BUILDER=default_local
+TITAN_CONFIG_BUILDER=default_local
 coreCount=16
 
 runName="default_run"
@@ -25,8 +25,8 @@ while getopts "c:r:n:p:b:w:s" opt; do
     echo "Corecount 设置为 $coreCount"
     ;;
   r)
-    VCLUSTER_CONFIG_BUILDER="$OPTARG"
-    echo "VCLUSTER_CONFIG_BUILDER 设置为 $VCLUSTER_CONFIG_BUILDER"
+    TITAN_CONFIG_BUILDER="$OPTARG"
+    echo "TITAN_CONFIG_BUILDER 设置为 $TITAN_CONFIG_BUILDER"
     ;;
   n)
     runName="$OPTARG"
@@ -61,7 +61,7 @@ PROMPTSTOP=$PROMPTSTOP \
   runName=$runName \
   BASE_CORE=$BASE_CORE \
   BASE_PORT=$BASE_PORT \
-  VCLUSTER_CONFIG_BUILDER=$VCLUSTER_CONFIG_BUILDER \
+  TITAN_CONFIG_BUILDER=$TITAN_CONFIG_BUILDER \
   coreCount=$coreCount \
   session_id=$session_id \
   TMUXIFIER_LAYOUT_PATH=$(pwd)/../.tmuxifier \

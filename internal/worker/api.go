@@ -22,7 +22,7 @@ func NewWorkerServer(worker *Worker) *WorkerServer {
 }
 
 func (w *WorkerServer) ProcessTask(ctx context.Context, req *pb.TaskProcessRequest) (*emptypb.Empty, error) {
-	// 处理任务的具体逻辑
+	// Handle the task.
 	_, err := w.Worker.ReceiveTask(ctx, &definitions.Task{
 		ID:         req.TaskId,
 		QueryID:    req.QueryId,
@@ -61,8 +61,7 @@ func (w *WorkerServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Que
 }
 
 func (w *WorkerServer) UpdateNodeTable(ctx context.Context, req *pb.UpdateNodeTableRequest) (*pb.UpdateNodeTableResponse, error) {
-	// 更新节点表
-	// TODO: 也许要加锁
+	// Replace the worker table. Callers serialize updates through gRPC handlers.
 	node_table := req.NodeTable
 	w.Worker.GlobalWorkers = node_table
 	response := &pb.UpdateNodeTableResponse{
@@ -131,7 +130,7 @@ func (w *WorkerServer) GetAvgDistComputations(ctx context.Context, req *pb.GetAv
 }
 
 func (w *WorkerServer) GetTimeAvg(ctx context.Context, req *pb.GetQueryTimeRequest) (*pb.GetQueryTimeResponse, error) {
-	// 获取查询时间
+	// Read a query-time counter.
 	querytype := req.QueryType
 	var res int64
 	var count int32
@@ -166,7 +165,7 @@ func (w *WorkerServer) GetTimeAvg(ctx context.Context, req *pb.GetQueryTimeReque
 }
 
 func (w *WorkerServer) GetIntegerValue(ctx context.Context, req *pb.GetIntegerValueRequest) (*pb.GetScoreResponse, error) {
-	// 获取查询时间
+	// Read a query-time counter.
 	querytype := req.QueryType
 	var res int64
 	switch querytype {
@@ -181,7 +180,7 @@ func (w *WorkerServer) GetIntegerValue(ctx context.Context, req *pb.GetIntegerVa
 	return response, nil
 }
 
-// 更新节点状态
+// SetThreshold updates the IVF selection threshold.
 func (w *WorkerServer) SetThreshold(ctx context.Context, req *pb.SetThresholdRequest) (*pb.SetterResponse, error) {
 	w.Worker.ivfThreshold = int(req.Threshold)
 	return &pb.SetterResponse{

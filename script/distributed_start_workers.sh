@@ -9,7 +9,7 @@ if [ -z LOG_LEVEL ]; then
   LOG_LEVEL=INFO
 fi
 MODE=distributed
-REMOTE_DIR="/data/vdb/TITAN-rebuttal/script/distributed_target" # 脚本所在路径
+REMOTE_DIR="${REMOTE_DIR:-/data/titan/script/distributed_target}"
 WORKER_BIN="worker"
 pwd
 
@@ -48,8 +48,8 @@ mkdir -p "$PIDDIR"
 chmod 777 "$PIDDIR"
 # make sure that all servers can write to the pid directory
 
-if [[ -z "$VCLUSTER_CONFIG_BUILDER" ]]; then
-  VCLUSTER_CONFIG_BUILDER=default_distributed
+if [[ -z "$TITAN_CONFIG_BUILDER" ]]; then
+  TITAN_CONFIG_BUILDER=default_distributed
 fi
 
 echo "dataTarget: $dataTarget"
@@ -84,7 +84,7 @@ for ((i = 0; i < num_workers; i++)); do
   echo "Starting $WORKER_ID on $HOSTNAME:$WORKER_PORT"
 
   # 执行远程命令并将远程 PID 文件内容保存到本地
-  CMD="cd $REMOTE_DIR && ./start_worker.sh -b $VCLUSTER_CONFIG_BUILDER -a $BASE_IP -i $WORKER_ID -p $WORKER_PORT -s $session_id $naiveArg 2>&1"
+  CMD="cd $REMOTE_DIR && ./start_worker.sh -b $TITAN_CONFIG_BUILDER -a $BASE_IP -i $WORKER_ID -p $WORKER_PORT -s $session_id $naiveArg 2>&1"
   echo "$CMD"
   ssh -n "$target_user@$HOSTNAME" "$CMD" &
   disown

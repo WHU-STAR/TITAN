@@ -5,10 +5,10 @@ import "google/protobuf/empty.proto";
 
 package pb;
 
-option go_package = "vcluster-system/protocol/pb";
+option go_package = "github.com/WHU-STAR/TITAN/protocol/pb";
 
 service ClientService {
-  // 查询任务
+  // Receive a finished query.
   rpc QueryTask(ClientTaskRequest) returns (google.protobuf.Empty);
 }
 

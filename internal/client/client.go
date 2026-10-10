@@ -73,7 +73,7 @@ func NewClient(address string) *Client {
 	return client
 }
 
-// LoadQuerySet 加载查询数据
+// LoadQuerySet loads the query vectors.
 func (c *Client) LoadQuerySet(path string) error {
 	var err error
 	c.QueryData, err = storage.LoadQuerySet(path)
@@ -84,7 +84,7 @@ func (c *Client) LoadQuerySet(path string) error {
 	return nil
 }
 
-// LoadGroundTruth 加载 ground truth
+// LoadGroundTruth loads the ground-truth neighbors.
 func (c *Client) LoadGroundTruth(path string) error {
 	var err error
 	c.groundTruth, err = storage.LoadGroundTruth(path)
@@ -109,12 +109,12 @@ func (c *Client) IsServerInitialized() bool {
 	return resp.IsInitialized
 }
 
-// Stop 停止客户端
+// Stop logs client shutdown.
 func (c *Client) Stop() {
 	logger.Info("Client stopped")
 }
 
-// StartGRPCServer 启动 gRPC 服务器
+// StartGRPCServer serves result callbacks from workers.
 func (c *Client) StartGRPCServer() {
 	server := grpc.NewServer()
 	pb.RegisterClientServiceServer(server, &ClientServer{client: c})
@@ -130,7 +130,7 @@ func (c *Client) StartGRPCServer() {
 	}
 }
 
-// StartQuery 启动查询
+// StartQuery submits queries to the scheduler.
 func (c *Client) StartQuery(count int, topk int, workerTopK int) {
 	wg := sync.WaitGroup{}
 	schedulerClient, err := rpc.GetSchedulerClient()
@@ -175,7 +175,7 @@ func (c *Client) StartQuery(count int, topk int, workerTopK int) {
 	logger.Info("Finished sending queries", zap.Int("count", count))
 }
 
-// HandleResult 监听resultChannel, 满了处理结果
+// HandleResult collects results and computes recall.
 func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall float64)) definitions.RunResult {
 	logger.Info("Start handling results")
 	results := make(map[uint32][]uint32)
@@ -194,7 +194,7 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 		logger.Debug("Query ID:", zap.Uint32("Query ID", result.QueryID))
 		logger.Debug("Task ID:", zap.String("Task ID", result.TaskID))
 
-		// 如果收集到足够的结果，计算召回率
+		// Compute recall once every query has a result.
 		if len(results) == clientQueryCount {
 			runResult.TopK = c.ClassicTotalTopk
 			runResult.WorkerTopK = c.ClassicWorkerTopk
@@ -208,9 +208,7 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 			endtime := time.Now()
 			elapsedTime := endtime.Sub(c.startTime)
 			elapsedQueryTime := c.queryEndTime.Sub(c.startTime)
-			// TODO: instead of log.Println, use logger
-
-			// 计算每个查询的召回率
+			// Recall of each query.
 			for queryID, queryResult := range results {
 				groundTruth := c.groundTruth.GroundTruth[queryID]
 				logger.Debug("Ground truth:", zap.Any("Ground truth", groundTruth))
@@ -221,7 +219,7 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 				logger.Debug("Recall:", zap.Float64("Recall", recall))
 			}
 
-			// 计算平均召回率
+			// Average recall.
 			avgRecall := totalRecall / float64(processedQueries)
 			logger.Info(fmt.Sprintf("Average Recall@%d = %.4f", c.ClassicTotalTopk, avgRecall))
 
@@ -256,11 +254,11 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 			if err != nil {
 				logger.Error("Failed to write result to CSV", zap.Error(err))
 			}
-			if err := c.writeLatencyDetailsCsv("../results/" + c.RunName + "_latency.csv", latencies); err != nil {
+			if err := c.writeLatencyDetailsCsv("../results/"+c.RunName+"_latency.csv", latencies); err != nil {
 				logger.Error("Failed to write latency details CSV", zap.Error(err))
 			}
 			ctx := context.Background()
-			// 获取worker的元索引查询总数
+			// Meta-index query count.
 			workerMetaMsg, err := schedulerClient.GetWorkerTotalMetaCount(ctx, &emptypb.Empty{})
 			if err != nil {
 				logger.Error("Failed to get worker meta count", zap.Error(err))
@@ -268,7 +266,7 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 			logger.Info("Worker meta query total:", zap.Int32("total", workerMetaMsg.Total))
 			logger.Info("Worker meta query counts:", zap.Any("counts", workerMetaMsg.WorkerCounts))
 
-			// 获取worker的内部索引查询总数
+			// Local-index query count.
 			workerInternalMsg, err := schedulerClient.GetWorkerTotalInternalCount(ctx, &emptypb.Empty{})
 			if err != nil {
 				logger.Error("Failed to get worker internal count", zap.Error(err))
@@ -300,80 +298,10 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 			logger.Info("Worker filtered buckets:", zap.Int("total", workersFilteredBucketsTotal))
 			logger.Info("Filtered buckets ratio:", zap.Float64("ratio", filteredBucketsRatio))
 
-			// // 获取worker的平均元索引查询时间
-			// workerMetaTimeMsg, err := schedulerClient.GetWorkerTotalTimeAvg(ctx, &pb.GetWorkerQueryTimeRequest{QueryType: 0})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker meta query avg time:", workerMetaTimeMsg.Avg)
-			// log.Println("Worker meta query times:", workerMetaTimeMsg.WorkerAvgs)
-			//
-			// // 获取worker的平均内部索引查询时间
-			// workerInternalTimeMsg, err := schedulerClient.GetWorkerTotalTimeAvg(ctx, &pb.GetWorkerQueryTimeRequest{QueryType: 10})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker internal query avg time:", workerInternalTimeMsg.Avg)
-			// log.Println("Worker internal query times:", workerInternalTimeMsg.WorkerAvgs)
-			//
-			// // 获取worker的平均元索引post查询时间
-			// workerMetaPostTimeMsg, err := schedulerClient.GetWorkerTotalTimeAvg(ctx, &pb.GetWorkerQueryTimeRequest{QueryType: 1})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker meta post query avg time:", workerMetaPostTimeMsg.Avg)
-			//
-			// // 获取worker的平均内部索引post查询时间
-			// workerInternalPostTimeMsg, err := schedulerClient.GetWorkerTotalTimeAvg(ctx, &pb.GetWorkerQueryTimeRequest{QueryType: 11})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker internal post query avg time:", workerInternalPostTimeMsg.Avg)
-			//
-			// // 获取worker的平均聚合时间
-			// workerAggregationTimeMsg, err := schedulerClient.GetWorkerTotalTimeAvg(ctx, &pb.GetWorkerQueryTimeRequest{QueryType: 20})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker aggregation avg time:", workerAggregationTimeMsg.Avg)
-			// log.Println("Worker aggregation times:", workerAggregationTimeMsg.WorkerAvgs)
-			//
-			// // 获取worker中元索引查询的平均跳数
-			// workerMetaHopsMsg, err := schedulerClient.GetWorkerTotalQueryHops(ctx, &pb.GetWorkerQueryHopsRequest{QueryType: 0})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker meta hops avg:", workerMetaHopsMsg.Avg)
-			// log.Println("Worker meta hops times:", workerMetaHopsMsg.WorkerAvgs)
-			//
-			// // 获取worker中内部索引查询的平均跳数
-			// workerInternalHopsMsg, err := schedulerClient.GetWorkerTotalQueryHops(ctx, &pb.GetWorkerQueryHopsRequest{QueryType: 1})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker internal hops avg:", workerInternalHopsMsg.Avg)
-			// log.Println("Worker internal hops times:", workerInternalHopsMsg.WorkerAvgs)
-			//
-			// // 获取worker中元索引查询的平均距离
-			// workerDistMsg, err := schedulerClient.GetWorkerTotalQueryDistAvg(ctx, &pb.GetWorkerQueryDistAvgRequest{QueryType: 0})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker meta dist avg:", workerDistMsg.Avg)
-			// log.Println("Worker meta dist times:", workerDistMsg.WorkerAvgs)
-			//
-			// // 获取worker中内部索引查询的平均距离
-			// workerInternalDistMsg, err := schedulerClient.GetWorkerTotalQueryDistAvg(ctx, &pb.GetWorkerQueryDistAvgRequest{QueryType: 1})
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// log.Println("Worker internal dist avg:", workerInternalDistMsg.Avg)
-			// log.Println("Worker internal dist times:", workerInternalDistMsg.WorkerAvgs)
-
 			break
 		}
 
-		// 将Result对象Reset后放回对象池
+		// Return the result object to the pool.
 		result.Reset()
 		c.resultPool.Put(result)
 	}
@@ -382,7 +310,7 @@ func (c *Client) HandleResult(clientQueryCount int, skipperFunc func(recall floa
 
 }
 
-// ProcessQueryResult 处理查询结果
+// ProcessQueryResult records one query result.
 func (c *Client) ProcessQueryResult(ctx context.Context, req *pb.ClientTaskRequest) {
 	queryID := uint32(req.QueryId)
 	now := time.Now()
@@ -425,7 +353,7 @@ func (c *Client) writeLatencyDetailsCsv(csvPath string, sortedLatencies []float6
 	return nil
 }
 
-// calculateRecall 计算召回率
+// calculateRecall returns |intersection| / |ground truth|.
 func calculateRecall(gt []uint32, result []uint32) float64 {
 	if len(result) < len(gt) {
 		gt = gt[:len(result)]
@@ -445,7 +373,7 @@ func calculateRecall(gt []uint32, result []uint32) float64 {
 	return float64(hits) / float64(len(gt))
 }
 
-// SetLambda 调用 scheduler 设置 Lambda 参数
+// SetLambda pushes the pruning lambda to every worker.
 func (c *Client) SetLambda(lambda float32) error {
 	schedulerClient, err := rpc.GetSchedulerClient()
 	c.CurrentLambda = lambda
@@ -456,7 +384,7 @@ func (c *Client) SetLambda(lambda float32) error {
 	return err
 }
 
-// SetEFSearch 调用 scheduler 设置 EF 参数
+// SetEFSearch pushes efSearch to every worker.
 func (c *Client) SetEFSearch(ef int) error {
 	schedulerClient, err := rpc.GetSchedulerClient()
 	c.CurrentEF = ef
@@ -467,7 +395,7 @@ func (c *Client) SetEFSearch(ef int) error {
 	return err
 }
 
-// SetThreshold 调用 scheduler 设置 Threshold 参数
+// SetThreshold pushes the IVF threshold to every worker.
 func (c *Client) SetThreshold(thresh int) error {
 	c.CurrentThresh = thresh
 	schedulerClient, err := rpc.GetSchedulerClient()
@@ -478,7 +406,7 @@ func (c *Client) SetThreshold(thresh int) error {
 	return err
 }
 
-// SetMetaK 调用 scheduler 设置 MetaK 参数
+// SetMetaK pushes metaK to every worker.
 func (c *Client) SetMetaK(metaK int) error {
 	c.CurrentMetaK = metaK
 	schedulerClient, err := rpc.GetSchedulerClient()
@@ -489,7 +417,7 @@ func (c *Client) SetMetaK(metaK int) error {
 	return err
 }
 
-// SetNProbe 调用 scheduler 设置 NProbe 参数
+// SetNProbe pushes nprobe to every worker.
 func (c *Client) SetNProbe(nProbe int) error {
 	c.CurrentNProbe = nProbe
 	schedulerClient, err := rpc.GetSchedulerClient()

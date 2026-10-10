@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package pb;
 
-option go_package = "vcluster-system/protocol/pb";
+option go_package = "github.com/WHU-STAR/TITAN/protocol/pb";
 
 service WorkerIntService {
-  // 处理查询任务，由一个worker发送给其他worker
+  // Local search dispatched by a coordinator worker.
   rpc Query(QueryRequest) returns (QueryResponse);
 }
 
