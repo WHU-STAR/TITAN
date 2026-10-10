@@ -1,0 +1,12 @@
+# index search
+ef: 200
+M: 32
+global_k: 10
+local_k: 4
+
+# index build
+thread_num: 16
+ef_construction: 200
+
+# dataset construction
+partition_num: 32

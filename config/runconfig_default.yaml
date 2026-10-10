@@ -1,0 +1,81 @@
+#                 Template configuration file for the runconfig.yaml                                    #
+#  Use `make config` to generate a new runconfig.yaml file in project root directory                    #
+
+
+default: &default # base setting
+  schedulerIP: "localhost"
+  schedulerPort: 50050
+  clientIP: "localhost"
+  clientPort: 50070
+  logLevel: "INFO"
+  metaK: [100]
+  threshold: [0]
+  nProbe: [0]
+  pruningLambda: 0.8
+  queryCount: 1000
+  epochs: 10
+  # topK: [20]
+  topK:
+    20: [10, 20]
+    100: [10, 20, 50, 100]
+  metaKAndEfSearch:
+    - [10, 20]
+    - [20, 40]
+    - [30, 60]
+    - [40, 80]
+  metaIndexType: "hnsw"
+  nodeIndexType: "hnsw"
+  searchMethod: "default" # Options: "default", "rf", "hf", "hf-v2"
+  pruningStrategy: "angular" # Options: "angular", "angular-v2", "centroid-distance", "distance-minus-radius", "fixed-topk"
+  recallGoal: 0.99
+  recallMinimum: 0.88
+  efSearch: [100]
+
+
+default_local:  &default_local
+  <<: *default
+  schedulerIP: "localhost"
+  schedulerPort: 50050
+  clientIP: "localhost"
+  clientPort: 50072
+  logLevel: "INFO"
+  metaK: [100]
+  threshold: [0]
+  efSearch: [100]
+
+local_impr: &local_impr
+  <<: *default_local
+  indexType: "hnsw_impr"
+  efSearch: [100]
+
+local_naive_param_tester:
+  <<: *default_local
+  efSearch: [10, 20, 30, 40, 50]
+
+deep_10m_10:
+  <<: *default_local
+  metaK: [10]
+  threshold: [0]
+  efSearch: [100]
+
+default_distributed:  &default_distributed
+  <<: *default
+  schedulerIP: "192.168.0.104"
+  schedulerPort: 50050
+  clientIP: "192.168.0.107"
+  clientPort: 50071
+  logLevel: "INFO"
+  metaK: [100]
+  threshold: [0]
+  efSearch: [100]
+
+distributed_1:
+  <<: *default_distributed
+  schedulerIP: "192.168.0.104"
+  schedulerPort: 50050
+  clientIP: "192.168.0.110"
+  clientPort: 50070
+  logLevel: "INFO"
+  metaK: [100]
+  threshold: [0]
+  efSearch: [100]

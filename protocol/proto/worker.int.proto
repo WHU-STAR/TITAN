@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "vcluster-system/protocol/pb";
+
+service WorkerIntService {
+  // 处理查询任务，由一个worker发送给其他worker
+  rpc Query(QueryRequest) returns (QueryResponse);
+}
+
+message QueryRequest {
+  string task_id = 1;
+  repeated float query = 2;
+  string task_type = 3;
+  int64 topk = 4;
+  repeated uint32 buckets = 5;
+  float goal = 6;
+  string search_type = 7; // bf or ann
+}
+
+message QueryResponse {
+  string task_id = 1;
+  repeated uint32 result = 2;
+  repeated float distance = 3;
+}

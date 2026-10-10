@@ -1,0 +1,143 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "worker.ext.proto";
+package pb;
+
+option go_package = "vcluster-system/protocol/pb";
+
+service SchedulerService {
+  // 注册工作节点
+  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
+
+  // 任务完成通知
+  rpc CompleteTask(TaskCompleteRequest) returns (TaskCompleteResponse);
+
+  // 心跳检测
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // 发送查询任务
+  rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
+
+  // 获取worker的元索引查询次数
+  rpc GetWorkerTotalMetaCount(google.protobuf.Empty)
+      returns (GetWorkerTotalQueryCountResponse);
+  // 获取worker的内部索引查询次数
+  rpc GetWorkerTotalInternalCount(google.protobuf.Empty)
+      returns (GetWorkerTotalQueryCountResponse);
+
+  // 获取worker的平均查询时间
+  rpc GetWorkerTotalTimeAvg(GetWorkerQueryTimeRequest) returns (GetWorkerQueryTimeResponse);
+
+  // 获取worker的平均查询跳数
+  rpc GetWorkerTotalQueryHops(GetWorkerQueryHopsRequest) returns (GetWorkerQueryHopsResponse);
+
+  // 获取worker的平均距离计算次数
+  rpc GetWorkerTotalQueryDistAvg(GetWorkerQueryDistAvgRequest) returns (GetWorkerQueryDistAvgResponse);
+
+  rpc SetNProbe(SetNProbeRequest) returns (SetterResponse);
+
+  rpc SetEFSearch(SetEFSearchRequest) returns (SetterResponse);
+  rpc SetPruningLambda(SetLambdaRequest) returns (SetterResponse);
+
+  rpc SetThreshold(SetThresholdRequest) returns (SetterResponse);
+
+  rpc SetMetaK(SetMetaKRequest) returns (SetterResponse);
+
+  rpc IsInitialized(google.protobuf.Empty) returns (IsInitializedResponse);
+  
+  rpc GetWorkerIntegerProperty(GetWorkerIntegerPropertyRequest) returns (GetWorkerIntegerPropertyResponse);
+}
+
+message ExecuteTaskRequest {
+  uint32 query_id = 1;
+  repeated float query = 2;
+  int64 topk = 3;
+  int64 workertopk = 4;
+}
+
+message ExecuteTaskResponse { string task_id = 1; }
+
+message RegisterNodeRequest {
+  string node_id = 1;
+  string address = 2;
+}
+
+message RegisterNodeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message TaskAssignRequest {
+  string task_id = 1;
+  repeated float query = 2;
+}
+
+message TaskAssignResponse { bool accepted = 1; }
+
+message TaskCompleteRequest {
+  string task_id = 1;
+}
+
+message TaskCompleteResponse { bool success = 1; }
+
+message HeartbeatRequest {
+  string node_id = 1;
+  int64 score = 2;
+}
+
+message HeartbeatResponse {
+  bool alive = 1;
+  map<string, string> node_table = 2;
+}
+
+message GetWorkerTotalQueryCountResponse {
+  int32 total = 1;
+  repeated int32 worker_counts = 2;
+}
+
+message GetWorkerQueryTimeRequest {
+  // 0: meta query, 1: meta post query,
+  // 10:  internal query, 11: internal post query
+  int32 QueryType = 1;
+}
+
+message GetWorkerQueryTimeResponse {
+  // in milliseconds
+  float avg = 1;
+  repeated float worker_avgs = 2;
+}
+
+message GetWorkerQueryHopsRequest {
+  // 0: meta query, 1: node query
+  uint32 QueryType = 1;
+}
+
+message GetWorkerQueryHopsResponse {
+  // in milliseconds
+  float avg = 1;
+  repeated float worker_avgs = 2;
+}
+
+
+message GetWorkerQueryDistAvgRequest {
+  // 0: meta query, 1: node query
+  uint32 QueryType = 1;
+}
+
+message GetWorkerQueryDistAvgResponse {
+  // in milliseconds
+  float avg = 1;
+  repeated float worker_avgs = 2;
+} 
+
+message GetWorkerIntegerPropertyRequest {
+  int32 QueryType = 1;
+}
+
+message GetWorkerIntegerPropertyResponse {
+  repeated int32 worker_values = 2;
+}
+
+message IsInitializedResponse{
+  bool isInitialized = 1;
+}

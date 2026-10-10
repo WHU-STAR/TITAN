@@ -1,0 +1,19 @@
+
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package pb;
+
+option go_package = "vcluster-system/protocol/pb";
+
+service ClientService {
+  // 查询任务
+  rpc QueryTask(ClientTaskRequest) returns (google.protobuf.Empty);
+}
+
+message ClientTaskRequest {
+  uint32 query_id = 1;
+  repeated uint32 result = 2;
+  string task_id = 3;
+}

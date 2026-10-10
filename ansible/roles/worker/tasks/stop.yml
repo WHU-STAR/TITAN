@@ -1,0 +1,23 @@
+  - name: Derive worker id
+    set_fact:
+      worker_id: "{{ inventory_hostname | regex_replace('.*(\d+)', 'worker-\1') }}"
+
+  - name: Get UID of ansible user
+    command: id -u {{ ansible_user }}
+    register: user_uid_cmd
+    changed_when: false
+
+  - name: Set user UID fact
+    set_fact:
+      user_uid: "{{ user_uid_cmd.stdout }}"
+
+  - name: Stop and disable worker service (user scope)
+    systemd:
+      name: "{{ worker_id }}"
+      state: stopped
+      enabled: false
+      scope: user
+    become: false
+    environment:
+      XDG_RUNTIME_DIR: "/run/user/{{ user_uid }}"
+

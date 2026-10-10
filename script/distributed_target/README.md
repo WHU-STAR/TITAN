@@ -1,0 +1,1 @@
+Scripts under this directory are to be run on the target machines in the cluster. These scripts are not to be run directly, but rather through `../distributed_start_workers.sh` and `../distributed_stop_workers.sh`.

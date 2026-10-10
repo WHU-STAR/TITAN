@@ -1,0 +1,196 @@
+# parameters:
+#  dataset: name of dataset
+#  bucket_num: number of buckets, if is list, apply hierarchical k-means
+
+fake_sift20k:
+  dataset: fake_sift
+  bucket_num:
+    - 20
+    - 20
+    - 30
+
+sift10k:
+  dataset: sift10k
+  bucket_num:
+    - 10
+    - 10
+
+sift10k_test:
+  dataset: sift10k
+  bucket_num:
+    - 500
+    - 10
+
+sift1m:
+  dataset: sift1m
+  bucket_num:
+    - 100
+    - 1000
+
+sift1m_test:
+  dataset: sift1m
+  bucket_num:
+    - 10
+    - 10
+    - 10
+    - 100
+
+deep1m:
+  dataset: deep1m
+  bucket_num:
+    - 100
+    - 1000
+
+deep10m:
+  dataset: deep10m
+  bucket_num:
+    - 1000
+    - 1000
+
+sift10m:
+  dataset: sift10m
+  bucket_num:
+    - 1000
+    - 1000
+
+deep100m_1mbkt:
+  dataset: deep100m
+  bucket_num:
+    - 1000
+    - 1000
+
+deep100m_4mbkt:
+  dataset: deep100m
+  bucket_num:
+    - 2000
+    - 2000
+
+deep100m_10mbkt:
+  dataset: deep100m
+  bucket_num:
+    - 100
+    - 100
+    - 1000
+
+sift100m_1mbkt:
+  dataset: sift100m
+  bucket_num:
+    - 1000
+    - 1000
+
+sift100m_4mbkt:
+  dataset: sift100m
+  bucket_num:
+    - 2000
+    - 2000
+
+sift100m_10mbkt:
+  dataset: sift100m
+  bucket_num:
+    - 100
+    - 100
+    - 1000
+
+space100m_4mbkt:
+  dataset: space100m
+  bucket_num:
+    - 2000
+    - 2000
+
+space100m_1mbkt:
+  dataset: space100m
+  bucket_num:
+    - 1000
+    - 1000
+
+space100m_10mbkt:
+  dataset: space100m
+  bucket_num:
+    - 100
+    - 100
+    - 1000
+
+wiki100m_1mbkt:
+  dataset: wiki100m
+  bucket_num:
+    - 1000
+    - 1000
+
+wiki100m_10mbkt:
+  dataset: wiki100m
+  bucket_num:
+    - 100
+    - 100
+    - 1000
+
+wiki50m_1mbkt:
+  dataset: wiki50m
+  bucket_num:
+    - 1000
+    - 1000
+
+wiki50m_5mbkt:
+  dataset: wiki50m
+  bucket_num:
+    - 50
+    - 100
+    - 1000
+
+wiki20m_1mbkt:
+  dataset: wiki20m
+  bucket_num:
+    - 1000
+    - 1000
+
+wiki20m_2mbkt:
+  dataset: wiki20m
+  bucket_num:
+    - 2000
+    - 1000
+
+wiki20m_0.5mbkt:
+  dataset: wiki20m
+  bucket_num:
+    - 500
+    - 1000
+
+wiki20m_0.2mbkt:
+  dataset: wiki20m
+  bucket_num:
+    - 200
+    - 1000
+
+laion_t2i_10m_1mbkt:
+  dataset: laion-t2i-10m
+  bucket_num:
+    - 1000
+    - 1000
+
+laion_i2i_10m_1mbkt:
+  dataset: laion-i2i-10m
+  bucket_num:
+    - 1000
+    - 1000
+
+laion_t2i_20m_1mbkt:
+  dataset: laion-t2i-20m
+  bucket_num:
+    - 1000
+    - 1000
+
+laion_i2i_20m_1mbkt:
+  dataset: laion-i2i-20m
+  bucket_num:
+    - 1000
+    - 1000
+
+gist1m:
+  dataset: gist1m
+  bucket_num:
+    - 1000
+
+sift1b_1mbkt:
+  dataset: sift1b
+  bucket_num:
+    - 1000
+    - 1000

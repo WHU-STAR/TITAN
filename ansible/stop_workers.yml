@@ -1,0 +1,7 @@
+- name: Stop distributed workers
+  hosts: workers
+  gather_facts: false
+  roles:
+    - role: worker
+      tasks_from: stop
+

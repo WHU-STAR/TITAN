@@ -1,0 +1,138 @@
+similarity_16_hnsw: &similarity_16_hnsw
+  method: "similarity"
+  graph_type: "hnsw"
+  ef: 200
+  M: 32
+  k: 10
+  thread_num: -1
+  ef_construction: 200
+  partition_num: 16
+
+similarity_12_hnsw:
+  <<: *similarity_16_hnsw
+  partition_num: 12
+
+similarity_8_hnsw:
+  <<: *similarity_16_hnsw
+  partition_num: 8
+
+similarity_4_hnsw:
+  <<: *similarity_16_hnsw
+  partition_num: 4
+
+similarity_16_hnsw_overlap: &similarity_16_hnsw_overlap
+  <<: *similarity_16_hnsw
+  overlap_num: 2
+
+similarity_12_hnsw_overlap:
+  <<: *similarity_16_hnsw_overlap
+  partition_num: 12
+
+similarity_8_hnsw_overlap:
+  <<: *similarity_16_hnsw_overlap
+  partition_num: 8
+
+similarity_4_hnsw_overlap:
+  <<: *similarity_16_hnsw_overlap
+  partition_num: 4
+
+similarity_16_bf:
+  <<: *similarity_16_hnsw
+  graph_type: "bf"
+
+similarity_32_hnsw:
+  <<: *similarity_16_hnsw
+  partition_num: 32
+
+naive_16_hnsw: &naive_16
+  <<: *similarity_16_hnsw
+  method: "naive"
+  graph_type: "hnsw"
+  ef: 200
+  M: 32
+  k: 10
+  ef_construction: 200
+  partition_num: 16
+
+naive_12_hnsw:
+  <<: *naive_16
+  partition_num: 12
+
+naive_8_hnsw:
+  <<: *naive_16
+  partition_num: 8
+
+naive_4_hnsw:
+  <<: *naive_16
+  partition_num: 4
+
+naive_32_hnsw:
+  <<: *naive_16
+  partition_num: 32
+
+# pyramid use 1m bucket as default
+pyramid_16_hnsw: &pyramid_16
+  <<: *similarity_16_hnsw
+  method: "pyramid"
+  graph_type: "hnsw"
+  ef: 200
+  M: 32
+  k: 10
+  ef_construction: 200
+  partition_num: 16
+  imblance_factor: 0.03
+  sample_num: 1000000
+
+pyramid_4_hnsw:
+  <<: *pyramid_16
+  partition_num: 4
+
+pyramid_8_hnsw:
+  <<: *pyramid_16
+  partition_num: 8
+
+pyramid_12_hnsw:
+  <<: *pyramid_16
+  partition_num: 12
+
+pyramid_16_hnsw_4mbkt:
+  <<: *pyramid_16
+  sample_num: 4000000
+
+pyramid_16_hnsw_0.1mbkt:
+  <<: *pyramid_16
+  sample_num: 100000
+
+pyramid_16_hnsw_0.2mbkt:
+  <<: *pyramid_16
+  sample_num: 200000
+
+pyramid_16_hnsw_1kbkt:
+  <<: *pyramid_16
+  imblance_factor: 0.2
+  sample_num: 1000
+pyramid_32_hnsw:
+  <<: *pyramid_16
+  partition_num: 32
+
+hakes_16_bf: &hakes_16
+  <<: *similarity_16_hnsw
+  method: "hakes"
+  graph_type: "bf"
+  ef: 200
+  M: 32
+  k: 10
+  ef_construction: 200
+  partition_num: 16
+
+hakes_16_hnsw:
+  <<: *hakes_16
+  graph_type: "hnsw"
+
+hakes_32_hnsw:
+  <<: *hakes_16
+  partition_num: 32
+
+hakes_32_bf:
+  <<: *hakes_16
+  partition_num: 32

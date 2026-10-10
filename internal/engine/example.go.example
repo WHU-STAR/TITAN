@@ -1,0 +1,21 @@
+package main
+
+import (
+	"fmt"
+
+	"github.com/WHU-STAR/TITAN/internal/engine/go_api/example"
+)
+
+func main() {
+	// 调用Add函数
+	result := example.Add(5, 3)
+	fmt.Printf("5 + 3 = %d\n", result)
+
+	// 调用Multiply函数
+	product := example.Multiply(2.5, 3.0)
+	fmt.Printf("2.5 * 3.0 = %f\n", product)
+
+	// 获取C++返回的消息
+	message := example.GetMessage()
+	fmt.Printf("Message from C++: %s\n", message)
+}

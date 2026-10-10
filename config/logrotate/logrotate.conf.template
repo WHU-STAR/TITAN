@@ -1,0 +1,9 @@
+/PLEASE/RUN/`make logrotate`/COMMAND/TO/GENERATE/THE/ACTUAL/FILE/log/*/*.log {
+    size 100M
+    rotate 5
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
+

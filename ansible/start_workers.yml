@@ -1,0 +1,6 @@
+- name: Start distributed workers (user systemd)
+  hosts: workers
+  gather_facts: false
+  roles:
+    - role: worker
+      tasks_from: start

@@ -1,0 +1,88 @@
+- name: Ensure log and pid directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  loop:
+    - "{{ remote_dir | dirname }}"
+    - "{{ remote_dir }}"
+    - "{{ log_dir }}"
+    - "{{ pid_dir }}"
+  become: true
+
+- name: Get IP address of host
+  command: getent hosts {{ inventory_hostname }}
+  register: host_ip_raw
+  changed_when: false
+
+- name: Extract worker IP
+  set_fact:
+    worker_ip: "{{ host_ip_raw.stdout.split(' ')[0] }}"
+    worker_id: "{{ inventory_hostname | regex_replace('.*-(\\d+)', 'worker-\\1') }}"
+    worker_port: "{{ base_port }}"
+
+- name: Determine if naive strategy is needed
+  shell: readlink ./data/workerdata
+  register: data_link
+  delegate_to: localhost
+  changed_when: false
+  args:
+    chdir: "{{ playbook_dir }}/.."
+
+- name: Set naive arg
+  set_fact:
+    naive_arg: "--strategy=naive"
+  when: data_link.stdout is search("naive")
+
+- name: Ensure user systemd config directory exists
+  file:
+    path: "/home/{{ ansible_user }}/.config/systemd/user"
+    state: directory
+    mode: '0755'
+  become: false
+
+- name: Enable user lingering for {{ ansible_user }}
+  command: loginctl enable-linger {{ ansible_user }}
+  become: true
+  changed_when: false
+
+- name: Copy worker binary to remote host
+  copy:
+    src: "{{ playbook_dir }}/../bin/{{ worker_bin }}"
+    dest: "{{ remote_dir }}/{{ worker_bin }}"
+    mode: '0755'
+  become: false
+
+- name: Render user systemd service
+  template:
+    src: worker.service.j2
+    dest: /home/{{ ansible_user }}/.config/systemd/user/{{ worker_id }}.service
+    mode: '0644'
+  become: false
+- name: Get UID of ansible user
+  command: id -u {{ ansible_user }}
+  register: user_uid_cmd
+  changed_when: false
+
+- name: Set user UID fact
+  set_fact:
+    user_uid: "{{ user_uid_cmd.stdout }}"
+
+- name: Reload user systemd
+  command: systemctl --user daemon-reload
+  become: false
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ user_uid }}"
+
+- name: Start and enable worker service (user scope)
+  systemd:
+    name: "{{ worker_id }}"
+    state: started
+    enabled: true
+    scope: user
+  become: false
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ user_uid }}"
+

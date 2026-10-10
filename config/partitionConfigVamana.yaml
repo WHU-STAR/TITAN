@@ -1,0 +1,35 @@
+similarity_16:
+  method: 'similarity'
+  ef: 400
+  alpha: 1.2
+  R: 256
+  L: 200
+  k: 10
+  partition_num: 16
+
+similarity_32:
+  method: 'similarity'
+  ef: 400
+  alpha: 1.2
+  R: 256
+  L: 200
+  k: 10
+  partition_num: 32
+
+naive_16:
+  method: 'naive'
+  ef: 400
+  alpha: 1.2
+  R: 256
+  L: 200
+  k: 10
+  partition_num: 16
+
+naive_32:
+  method: 'naive'
+  ef: 400
+  alpha: 1.2
+  R: 256
+  L: 200
+  k: 10
+  partition_num: 32

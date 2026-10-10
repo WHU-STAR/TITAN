@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "vcluster-system/protocol/pb";
+
+service WorkerExtService {
+  // 处理任务，这里主要是指元索引查询
+  rpc ProcessTask(TaskProcessRequest) returns (google.protobuf.Empty);
+
+  // 节点表更新
+  rpc UpdateNodeTable(UpdateNodeTableRequest) returns (UpdateNodeTableResponse);
+
+  // 获取节点状态
+  rpc GetScore(google.protobuf.Empty) returns (GetScoreResponse);
+  rpc GetMetaQueryTotal(google.protobuf.Empty) returns (GetQueryTotalResponse);
+  rpc GetInternalQueryTotal(google.protobuf.Empty)
+      returns (GetQueryTotalResponse);
+  rpc GetTimeAvg(GetQueryTimeRequest)
+      returns (GetQueryTimeResponse);
+  rpc GetAvgHops(GetAvgHopsRequest)
+      returns (GetAvgHopsResponse);
+  rpc GetAvgDistComputations(GetAvgDistComputationsRequest)
+      returns (GetAvgDistComputationsResponse);
+  rpc GetIntegerValue(GetIntegerValueRequest) returns (GetScoreResponse);
+  
+  rpc SetEFSearch(SetEFSearchRequest) returns (SetterResponse);
+  rpc SetThreshold(SetThresholdRequest) returns (SetterResponse);
+  rpc SetMetaK(SetMetaKRequest) returns (SetterResponse);
+  rpc SetLambda(SetLambdaRequest) returns (SetterResponse);
+  rpc SetNProbe(SetNProbeRequest) returns (SetterResponse);
+  rpc GetNodeTableSize(google.protobuf.Empty) returns (GetNodeTableSizeResponse);
+}
+
+message SetterResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetAvgHopsRequest {uint32 queryType = 1; }
+
+message GetAvgDistComputationsRequest {uint32 queryType = 1; }
+
+message GetAvgHopsResponse { float num = 1; }
+
+message GetAvgDistComputationsResponse { float num = 1; }
+
+message TaskProcessRequest {
+  string task_id = 1;
+  uint32 query_id = 2;
+  repeated float query = 3;
+  string task_type = 4;
+  int64 top_k = 5;
+  int64 worker_top_k = 6;
+  float goal = 7; // recall goal, may need to set default value
+}
+
+message UpdateNodeTableRequest { map<string, string> node_table = 1; }
+
+message UpdateNodeTableResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetScoreResponse { int64 score = 1; }
+
+message GetIntegerValueRequest {
+  int32 QueryType = 1;
+}
+
+message GetQueryTotalResponse { int32 total = 1; }
+
+message GetQueryTimeRequest {
+    // 0: meta query, 1: meta post query,
+    // 10:  internal query, 11: internal post query
+  int32 QueryType = 1;
+}
+
+message GetQueryTimeResponse {
+  // in milliseconds
+  float avg = 1;
+}
+
+message SetEFSearchRequest {
+  int32 ef_search = 1;
+}
+message SetThresholdRequest {
+  int32 threshold = 1;
+}
+message SetMetaKRequest {
+  int32 meta_k = 1;
+}
+
+message SetLambdaRequest {
+  float lambda = 1;
+}
+
+message SetNProbeRequest {
+  int32 n_probe = 1;
+}
+
+message GetNodeTableSizeResponse {
+  int32 size = 1;
+}
